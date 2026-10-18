@@ -1,17 +1,20 @@
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nedim Humackic | Filmemacher</title>
 <style>
-  @font-face{
+@font-face{
   font-family:"Thunderman";
   src:url("Thunderman.ttf") format("truetype");
   font-display:swap;
 }
 body{font-family:"Thunderman",Arial,sans-serif;max-width:1000px;margin:auto;padding:10px}
 button{font-family:inherit}
-  .knopf{
+img{max-width:100%}
+
+.knopf{
   display:inline-block;
   padding:10px 15px;
   background:rgb(57, 82, 241);
@@ -19,53 +22,90 @@ button{font-family:inherit}
   text-decoration:none;
   border-radius:8px;
   font-weight:bold;
+  font-size:1.5em;
 }
 .knopf:hover{background:darkorange}
-  details{margin:20px 0}
-summary{
-  cursor:pointer;
-  padding:10px 10px;
+
+.mittig{
+  min-height:65vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:8vh 0 4vh;
+}
+.welle{font-size:clamp(2.2rem, 8vw, 4.5rem);margin:0 0 50px}
+.wort{display:inline-block;white-space:nowrap}
+.buchstabe{display:inline-block;animation:welle 2.4s ease-in-out infinite}
+@keyframes welle{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-0.25em)}
+}
+@media (prefers-reduced-motion:reduce){
+  .buchstabe{animation:none}
+}
+
+.block{
   background:rgb(57, 82, 241);
   color:#fff;
   border-radius:8px;
-  font-size:1.2em;
-  font-weight:bold;
-  list-style:none;
+  padding:20px;
+  margin:40px 0;
+  display:flex;
+  align-items:center;
+  gap:20px;
+  flex-wrap:wrap;
 }
-summary::-webkit-details-marker{display:none}
-summary::before{content:"▸ "}
-details[open] summary::before{content:"▾ "}
-summary:hover{background:#444}
-body{max-width:1000px;margin:auto;padding:10px}
-img,video,iframe{max-width:100%}
-.reihe{display:flex;gap:10px;flex-wrap:wrap}
-.reihe div{flex:1 1 200px}
-.reihe video,.reihe img,.reihe iframe{width:100%}
-.reihe iframe{aspect-ratio:16/9}
+.block img{width:150px;flex:none;border-radius:8px}
+.block .text{flex:1 1 250px}
+.block h2{margin:0 0 10px}
+.block p{margin:0;font-size:1.2em}
 </style>
 </head>
 <body>
 
-<div class="reihe">
-  <div>
-<h1>Wilkommen auf meiner Website!</h1>
-  </div>
-  <div>
-<img src="hnedim.gif" width="150" alt="Nedim Humackic">
-  </div>
-  </div>
-<h1>Ich bin Nedim Humackic, 21 Jahre alt und Filmemacher.</h1>
+<div class="mittig">
+  <h1 class="welle">Willkommen auf meiner Website!</h1>
+  <a class="knopf" href="portfolio.html">MEINE ARBEITEN</a>
+</div>
 
-<h2><a class="knopf" href="portfolio.html">MEINE ARBEITEN</a></h2>
-  
+<div class="block">
+  <img src="hnedim.gif" alt="Nedim Humackic">
+  <div class="text">
+    <h2>Über mich</h2>
+    <p>Ich bin Nedim Humackic, 21 Jahre alt und Filmemacher.</p>
+  </div>
+</div>
 
 <p><a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a></p>
 
 <script>
-function laden(id, v) {
-  document.getElementById(id).innerHTML =
-    '<iframe allow="autoplay" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube-nocookie.com/embed/' + v + '?autoplay=1"></iframe>';
-}
+// Macht aus dem Text mit der Klasse "welle" lauter einzelne Buchstaben,
+// damit jeder Buchstabe einzeln wackeln kann.
+document.querySelectorAll('.welle').forEach(function (el) {
+  var text = el.textContent.trim();
+  el.setAttribute('aria-label', text); // Vorlese-Programme lesen so den ganzen Satz
+  el.textContent = '';
+  var zaehler = 0;
+  var woerter = text.split(' ');
+  woerter.forEach(function (wort, n) {
+    var w = document.createElement('span');
+    w.className = 'wort';
+    w.setAttribute('aria-hidden', 'true');
+    wort.split('').forEach(function (b) {
+      var s = document.createElement('span');
+      s.className = 'buchstabe';
+      s.textContent = b;
+      // Jeder Buchstabe startet etwas später -> es entsteht eine Welle
+      s.style.animationDelay = (zaehler * 0.1 - 3) + 's';
+      zaehler++;
+      w.appendChild(s);
+    });
+    el.appendChild(w);
+    if (n < woerter.length - 1) el.appendChild(document.createTextNode(' '));
+  });
+});
 </script>
 </body>
 </html>

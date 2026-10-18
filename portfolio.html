@@ -1,17 +1,26 @@
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nedim Humackic | Filmemacher</title>
 <style>
-  @font-face{
+@font-face{
   font-family:"Thunderman";
   src:url("Thunderman.ttf") format("truetype");
   font-display:swap;
 }
 body{font-family:"Thunderman",Arial,sans-serif;max-width:1000px;margin:auto;padding:10px}
 button{font-family:inherit}
-  .knopf{
+img,video,iframe{max-width:100%}
+
+h1{
+  font-size:clamp(3.5rem, 12vw, 7rem);
+  text-align:center;
+  margin:6vh 0 5vh;
+}
+
+.knopf{
   display:inline-block;
   padding:10px 15px;
   background:orange;
@@ -21,110 +30,128 @@ button{font-family:inherit}
   font-weight:bold;
 }
 .knopf:hover{background:darkorange}
-  details{margin:20px 0}
-summary{
-  cursor:pointer;
-  padding:10px 10px;
+.knopf.insta{background:linear-gradient(45deg, #833ab4, #e1306c)}
+.knopf.insta:hover{background:linear-gradient(45deg, #6a2a96, #c2255a)}
+.knopf.zurueck{background:rgb(57, 82, 241)}
+.knopf.zurueck:hover{background:rgb(35, 55, 200)}
+
+.mittig{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:20px 0;
+}
+  
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin:30px 0 10px}
+.tab{
+  flex:1 1 180px;
+  padding:14px 10px;
   background:rgb(57, 82, 241);
   color:#fff;
+  border:0;
   border-radius:8px;
   font-size:1.2em;
   font-weight:bold;
-  list-style:none;
+  cursor:pointer;
 }
-summary::-webkit-details-marker{display:none}
-summary::before{content:"▸ "}
-details[open] summary::before{content:"▾ "}
-summary:hover{background:#444}
-body{max-width:1000px;margin:auto;padding:10px}
-img,video,iframe{max-width:100%}
+.tab::before{content:"▸ "}
+.tab.aktiv::before{content:"▾ "}
+.tab:hover{background:rgb(35, 55, 200)}
+.tab.aktiv{background:orange}
+
+.bereich{margin:20px 0}
+
 .reihe{display:flex;gap:10px;flex-wrap:wrap}
 .reihe div{flex:1 1 200px}
 .reihe video,.reihe img,.reihe iframe{width:100%}
 .reihe iframe{aspect-ratio:16/9}
+
 </style>
 </head>
 <body>
- 
+
+<a class="knopf zurueck" href="index.html">← Zurück</a>
+
 <h1>Portfolio</h1>
   
-  <h2><a class="knopf" href="mailto:nedim.hum@gmail.com">KONTAKT</a></h2>
-  
-<details>
-<summary>Eigene Projekte</summary>
-<p>Alles von mir überlegt, gedreht und fertiggestellt.</p>
+<div class="mittig">
+  <a class="knopf" href="mailto:nedim.hum@gmail.com">E-MAIL</a>
+  <a class="knopf insta" href="https://www.instagram.com/nedim.mp4/" target="_blank" rel="noopener">INSTAGRAM</a>
+</div>
 
-<!-- class="reihe" legt die drei Kästen (div) nebeneinander -->
+<div class="tabs">
+  <button class="tab" id="tab-eigene" aria-expanded="false" onclick="oeffnen('eigene')">Eigene Projekte</button>
+  <button class="tab" id="tab-agentur" aria-expanded="false" onclick="oeffnen('agentur')">Agentur-Projekte</button>
+  <button class="tab" id="tab-youtube" aria-expanded="false" onclick="oeffnen('youtube')">YouTube-Videos</button>
+</div>
+
+<section class="bereich" id="eigene" hidden>
 <div class="reihe">
 <div>
-<h4>Kitschiger Wanderfilm</h4>
+<h3>Kitschiger Wanderfilm</h3>
 <video controls poster="vid1.jpg" src="vid1.mp4"></video>
 </div>
 <div>
-<h4>Kurzfilm Konzept Iris</h4>
+<h3>Kurzfilm Konzept Iris</h3>
 <video controls poster="vid2.jpg" src="vid2.mp4"></video>
 </div>
 <div>
-<h4>Teqball Tournier Highlights</h4>
+<h3>Teqball Tournier Reel</h3>
 <video controls poster="vid3.jpg" src="vid3.mp4"></video>
 </div>
 </div>
-  </details>
+</section>
 
-  <details>
-<summary>Agentur-Projekte</summary>
-<p>Ich arbeite gerade als Trainee Videoproduzent bei Faktor 3.</p>
-
+<section class="bereich" id="agentur" hidden>
 <div class="reihe">
 <div>
-<h4>3D Brita Jubiläum</h4>
+<h3>3D Animation</h3>
 <video controls poster="fak1.jpg" src="fak1.mp4"></video>
-<p>3D Modell und Animation von mir alleine in Blender erstellt</p>
 </div>
 <div>
-<h4>Starbucks Behind the Scenes</h4>
+<h3>Behind the Scenes</h3>
 <video controls poster="fak2.jpg" src="fak2.mp4"></video>
 </div>
 <div>
-<h4>Perlweiss Erklärvideo</h4>
+<h3>Erklärvideo</h3>
 <video controls poster="fak3.jpg" src="fak3.mp4"></video>
 <p>Da bin ich! :0</p>
 </div>
 </div>
-  </details>
+</section>
 
-  <details>
-<summary>YouTube-Videos</summary>
-<p>Meine 3 Lieblingsvideos von meinem eigenen Kanal.</p>
-
-<!-- Jedes Video: Vorschaubild + Knopf. Der Knopf ruft laden() auf, das den Player einsetzt. -->
+<section class="bereich" id="youtube" hidden>
 <div class="reihe">
 <div>
-<h4>Urlaub Vlog</h4>
+<h3>Urlaub Vlog</h3>
 <div id="yt1">
 <img src="yt1.jpg" alt="Vorschau"><br>
 <button onclick="laden('yt1','lGqfyHk4mdA')">Video laden (Verbindung zu YouTube)</button>
 </div>
 </div>
 <div>
-<h4>Wander Vlog</h4>
+<h3>Wander Vlog</h3>
 <div id="yt2">
 <img src="yt2.jpg" alt="Vorschau"><br>
 <button onclick="laden('yt2','oNNqEW4rRIM')">Video laden (Verbindung zu YouTube)</button>
 </div>
 </div>
 <div>
-<h4>Harz Vlog</h4>
+<h3>Harz Vlog</h3>
 <div id="yt3">
 <img src="yt3.jpg" alt="Vorschau"><br>
 <button onclick="laden('yt3','9HcyDRoSFp0')">Video laden (Verbindung zu YouTube)</button>
 </div>
-<p>Da war ich 17!</p>
 </div>
+  <div class="mittig">
+    <p>Meine 3 Lieblingsvideos von meinem eigenen Kanal.</p>
+  </div>
 </div>
-  </details>
+</section>
 
-<h2>Mehr Infos zu mir</h2>
+
 <div class="reihe">
   <div>
     <h3>Equipment</h3>
@@ -142,10 +169,9 @@ img,video,iframe{max-width:100%}
       <li>After Effects: seit 3 Jahren</li>
       <li>Blender: seit 2 Jahren</li>
     </ul>
-    </div>
   </div>
+</div>
 
-<h2><a class=knopf href="mailto:nedim.hum@gmail.com">KONTAKT</a></h2>
 
 <p><a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a></p>
 
@@ -156,6 +182,34 @@ function laden(id, v) {
   document.getElementById(id).innerHTML =
     '<iframe allow="autoplay" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube-nocookie.com/embed/' + v + '?autoplay=1"></iframe>';
 }
+
+// Merkt sich die YouTube-Kästen im Ausgangszustand (Vorschaubild + Knopf)
+var ytStart = {};
+document.querySelectorAll('[id^="yt"]').forEach(function (k) {
+  ytStart[k.id] = k.innerHTML;
+});
+
+// Beim Zuklappen: Videos anhalten und YouTube-Kästen zurücksetzen
+function stoppen(bereich) {
+  bereich.querySelectorAll('video').forEach(function (v) { v.pause(); });
+  bereich.querySelectorAll('[id^="yt"]').forEach(function (k) { k.innerHTML = ytStart[k.id]; });
+}
+
+// Öffnet den angeklickten Bereich und schließt die anderen.
+// Klickt man den offenen Bereich nochmal an, klappt er zu.
+function oeffnen(id) {
+  document.querySelectorAll('.bereich').forEach(function (b) {
+    var tab = document.getElementById('tab-' + b.id);
+    var auf = (b.id === id) && b.hidden;
+    if (!auf && !b.hidden) stoppen(b);
+    b.hidden = !auf;
+    tab.classList.toggle('aktiv', auf);
+    tab.setAttribute('aria-expanded', auf);
+  });
+}
+
+// Wenn ein Bereich beim Laden schon offen sein soll, die // vorne entfernen:
+// oeffnen('eigene');
 </script>
 </body>
 </html>
