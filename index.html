@@ -11,6 +11,11 @@
   src:url("Thunderman.ttf") format("truetype");
   font-display:swap;
 }
+@font-face{
+  font-family:"Determination";
+  src:url("determination.ttf") format("truetype");
+  font-display:swap;
+}
 body{font-family:"Thunderman",Arial,sans-serif;max-width:1000px;margin:auto;padding:10px;position:relative}
 button{font-family:inherit}
 img{max-width:100%}
@@ -60,17 +65,28 @@ img{max-width:100%}
 }
 .block img{width:150px;flex:none;border-radius:8px}
 .block .text{flex:1 1 250px}
-.block h2{margin:0 0 10px}
+.block h2{margin:0 0 10px;font-family:"Determination","Courier New",monospace}
 .block p{margin:0;font-size:1.2em}
 
+#dialog{display:grid}
+#dialog .zeile{grid-area:1/1;margin:0;font-family:"Determination","Courier New",monospace;font-size:1.4em}
+.zeichen{visibility:hidden}  
+.zeichen.an{visibility:visible}
 
-#lagerfeuer{cursor:pointer;width:200px}
+#hnedim{cursor:pointer}
+
+#lagerfeuer{
+  cursor:pointer;
+  width:200px;
+  position:relative;
+  top:20px;
+}
 
 
 #hund{
   position:absolute;
-  top:50%;
-  right:0;
+  top:47.5%;
+  right:20%;
   width:50px;
   opacity:0;
   cursor:pointer;
@@ -84,14 +100,16 @@ img{max-width:100%}
 
 <div class="mittig">
   <h1 class="welle">Willkommen auf meiner Website!</h1>
-  <a class="knopf" href="portfolio.html">MEINE ARBEITEN</a>
+  <a class="knopf" href="portfolio.html">PORTFOLIO</a>
 </div>
 
 <div class="block">
-  <img src="hnedim.gif" alt="Nedim Humackic">
-  <div class="text">
-    <h2>Über mich</h2>
-    <p>Ich bin Nedim Humackic, 21 Jahre alt und Filmemacher.</p>
+  <img src="hnedim.gif" id="hnedim" alt="Nedim Humackic" title="Klick mich">
+  <div class="text" id="dialog">
+    <p class="zeile">Hallo! Ich bin Nedim Humackic, 21 Jahre alt und Filmemacher.</p>
+    <p class="zeile">Meine Top Skills sind Kamera, Schnitt, VFX und 3D-Animation.</p>
+    <p class="zeile">Wenn du auf PORTFOLIO klickst, kannst du dir meine Arbeiten anschauen.</p>
+    <p class="zeile">Viel Spaß auf meiner Website!</p>
   </div>
   <img src="lagerfeuer.gif" id="lagerfeuer" alt="Lagerfeuer" title="Klick mich">
 </div>
@@ -137,6 +155,72 @@ hund.addEventListener('click', function () {
   hund.classList.add('revealed');
   hundSound.currentTime = 0;
   hundSound.play();
+});
+
+// Jeden Satz in einzelne, noch unsichtbare Buchstaben zerlegen
+var saetze = Array.prototype.map.call(document.querySelectorAll('#dialog .zeile'), function (p) {
+  var text = p.textContent.trim();
+  p.setAttribute('aria-label', text);
+  p.textContent = '';
+  var buchstaben = [];
+  text.split('').forEach(function (c) {
+    var s = document.createElement('span');
+    s.className = 'zeichen';
+    s.setAttribute('aria-hidden', 'true');
+    s.textContent = c;
+    p.appendChild(s);
+    buchstaben.push(s);
+  });
+  return buchstaben;
+});
+
+var beep = new Audio('beep.mp3');
+beep.preload = 'auto';
+function blip() {
+  var b = beep.cloneNode();
+  b.play().catch(function () {});
+}
+
+var aktuell = -1;      // welcher Satz gerade dran ist
+var tippt = false;     // läuft der Satz noch?
+var timer = null;
+var hnedimBild = document.getElementById('hnedim');
+
+function satzFertig() {
+  tippt = false;
+  if (aktuell >= saetze.length - 1) hnedimBild.style.cursor = 'default';  // letzter Satz: nichts mehr zu klicken
+}
+
+function starteSatz(n) {
+  if (aktuell >= 0) {   // vorherigen Satz ausblenden
+    saetze[aktuell].forEach(function (z) { z.classList.remove('an'); });
+  }
+  aktuell = n;
+  tippt = true;
+  var i = 0;
+  (function weiter() {
+    var buchstaben = saetze[n];
+    if (i >= buchstaben.length) { satzFertig(); return; }
+    var z = buchstaben[i];
+    z.classList.add('an');
+    i++;
+    var c = z.textContent;
+    if (c !== ' ' && ',.!?'.indexOf(c) === -1) blip();
+    // kleine Pause nach Satzzeichen, wie im Spiel
+    var pause = ',.!?'.indexOf(c) !== -1 ? 250 : 40;
+    timer = setTimeout(weiter, pause);
+  })();
+}
+
+hnedimBild.addEventListener('click', function () {
+  if (tippt) {
+    // Klick während des Tippens: Satz sofort komplett anzeigen
+    clearTimeout(timer);
+    saetze[aktuell].forEach(function (z) { z.classList.add('an'); });
+    satzFertig();
+  } else if (aktuell < saetze.length - 1) {
+    starteSatz(aktuell + 1);
+  }
 });
 </script>
 </body>
