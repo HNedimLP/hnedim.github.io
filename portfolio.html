@@ -1,0 +1,161 @@
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nedim Humackic | Filmemacher</title>
+<style>
+  @font-face{
+  font-family:"Thunderman";
+  src:url("Thunderman.ttf") format("truetype");
+  font-display:swap;
+}
+body{font-family:"Thunderman",Arial,sans-serif;max-width:1000px;margin:auto;padding:10px}
+button{font-family:inherit}
+  .knopf{
+  display:inline-block;
+  padding:10px 15px;
+  background:orange;
+  color:#fff;
+  text-decoration:none;
+  border-radius:8px;
+  font-weight:bold;
+}
+.knopf:hover{background:darkorange}
+  details{margin:20px 0}
+summary{
+  cursor:pointer;
+  padding:10px 10px;
+  background:rgb(57, 82, 241);
+  color:#fff;
+  border-radius:8px;
+  font-size:1.2em;
+  font-weight:bold;
+  list-style:none;
+}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ "}
+details[open] summary::before{content:"▾ "}
+summary:hover{background:#444}
+body{max-width:1000px;margin:auto;padding:10px}
+img,video,iframe{max-width:100%}
+.reihe{display:flex;gap:10px;flex-wrap:wrap}
+.reihe div{flex:1 1 200px}
+.reihe video,.reihe img,.reihe iframe{width:100%}
+.reihe iframe{aspect-ratio:16/9}
+</style>
+</head>
+<body>
+ 
+<h1>Portfolio</h1>
+  
+  <h2><a class="knopf" href="mailto:nedim.hum@gmail.com">KONTAKT</a></h2>
+  
+<details>
+<summary>Eigene Projekte</summary>
+<p>Alles von mir überlegt, gedreht und fertiggestellt.</p>
+
+<!-- class="reihe" legt die drei Kästen (div) nebeneinander -->
+<div class="reihe">
+<div>
+<h4>Kitschiger Wanderfilm</h4>
+<video controls poster="vid1.jpg" src="vid1.mp4"></video>
+</div>
+<div>
+<h4>Kurzfilm Konzept Iris</h4>
+<video controls poster="vid2.jpg" src="vid2.mp4"></video>
+</div>
+<div>
+<h4>Teqball Tournier Highlights</h4>
+<video controls poster="vid3.jpg" src="vid3.mp4"></video>
+</div>
+</div>
+  </details>
+
+  <details>
+<summary>Agentur-Projekte</summary>
+<p>Ich arbeite gerade als Trainee Videoproduzent bei Faktor 3.</p>
+
+<div class="reihe">
+<div>
+<h4>3D Brita Jubiläum</h4>
+<video controls poster="fak1.jpg" src="fak1.mp4"></video>
+<p>3D Modell und Animation von mir alleine in Blender erstellt</p>
+</div>
+<div>
+<h4>Starbucks Behind the Scenes</h4>
+<video controls poster="fak2.jpg" src="fak2.mp4"></video>
+</div>
+<div>
+<h4>Perlweiss Erklärvideo</h4>
+<video controls poster="fak3.jpg" src="fak3.mp4"></video>
+<p>Da bin ich! :0</p>
+</div>
+</div>
+  </details>
+
+  <details>
+<summary>YouTube-Videos</summary>
+<p>Meine 3 Lieblingsvideos von meinem eigenen Kanal.</p>
+
+<!-- Jedes Video: Vorschaubild + Knopf. Der Knopf ruft laden() auf, das den Player einsetzt. -->
+<div class="reihe">
+<div>
+<h4>Urlaub Vlog</h4>
+<div id="yt1">
+<img src="yt1.jpg" alt="Vorschau"><br>
+<button onclick="laden('yt1','lGqfyHk4mdA')">Video laden (Verbindung zu YouTube)</button>
+</div>
+</div>
+<div>
+<h4>Wander Vlog</h4>
+<div id="yt2">
+<img src="yt2.jpg" alt="Vorschau"><br>
+<button onclick="laden('yt2','oNNqEW4rRIM')">Video laden (Verbindung zu YouTube)</button>
+</div>
+</div>
+<div>
+<h4>Harz Vlog</h4>
+<div id="yt3">
+<img src="yt3.jpg" alt="Vorschau"><br>
+<button onclick="laden('yt3','9HcyDRoSFp0')">Video laden (Verbindung zu YouTube)</button>
+</div>
+<p>Da war ich 17!</p>
+</div>
+</div>
+  </details>
+
+<h2>Mehr Infos zu mir</h2>
+<div class="reihe">
+  <div>
+    <h3>Equipment</h3>
+    <ul>
+      <li>Fujifilm X-S20</li>
+      <li>Sigma Objektiv 18-50mm f/2.8</li>
+      <li>Rode Video Mikro 2</li>
+      <li>GoPro HERO 10</li>
+    </ul>
+  </div>
+  <div>
+    <h3>Programme und Erfahrung</h3>
+    <ul>
+      <li>Premiere Pro: seit 6 Jahren</li>
+      <li>After Effects: seit 3 Jahren</li>
+      <li>Blender: seit 2 Jahren</li>
+    </ul>
+    </div>
+  </div>
+
+<h2><a class=knopf href="mailto:nedim.hum@gmail.com">KONTAKT</a></h2>
+
+<p><a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a></p>
+
+<script>
+// Ersetzt den Vorschau-Kasten (id) durch den YouTube-Player des Videos (v)
+// referrerpolicy sagt YouTube, von welcher Seite der Player kommt (sonst Fehler 153)
+function laden(id, v) {
+  document.getElementById(id).innerHTML =
+    '<iframe allow="autoplay" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube-nocookie.com/embed/' + v + '?autoplay=1"></iframe>';
+}
+</script>
+</body>
+</html>
