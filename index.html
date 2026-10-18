@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nedim Humackic | Filmemacher</title>
+<link rel="icon" type="image/png" href="favicon.png">
 <style>
 @font-face{
   font-family:"Thunderman";
   src:url("Thunderman.ttf") format("truetype");
   font-display:swap;
 }
-body{font-family:"Thunderman",Arial,sans-serif;max-width:1000px;margin:auto;padding:10px}
+body{font-family:"Thunderman",Arial,sans-serif;max-width:1000px;margin:auto;padding:10px;position:relative}
 button{font-family:inherit}
 img{max-width:100%}
 
@@ -61,6 +62,22 @@ img{max-width:100%}
 .block .text{flex:1 1 250px}
 .block h2{margin:0 0 10px}
 .block p{margin:0;font-size:1.2em}
+
+
+#lagerfeuer{cursor:pointer;width:200px}
+
+
+#hund{
+  position:absolute;
+  top:50%;
+  right:0;
+  width:50px;
+  opacity:0;
+  cursor:pointer;
+  transition:opacity .4s;
+  z-index:1;
+}
+#hund.revealed{opacity:1}
 </style>
 </head>
 <body>
@@ -76,16 +93,18 @@ img{max-width:100%}
     <h2>Über mich</h2>
     <p>Ich bin Nedim Humackic, 21 Jahre alt und Filmemacher.</p>
   </div>
+  <img src="lagerfeuer.gif" id="lagerfeuer" alt="Lagerfeuer" title="Klick mich">
 </div>
 
 <p><a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a></p>
 
+<img src="hund.gif" id="hund" alt="Versteckter Hund">
+
 <script>
-// Macht aus dem Text mit der Klasse "welle" lauter einzelne Buchstaben,
-// damit jeder Buchstabe einzeln wackeln kann.
+
 document.querySelectorAll('.welle').forEach(function (el) {
   var text = el.textContent.trim();
-  el.setAttribute('aria-label', text); // Vorlese-Programme lesen so den ganzen Satz
+  el.setAttribute('aria-label', text);
   el.textContent = '';
   var zaehler = 0;
   var woerter = text.split(' ');
@@ -97,7 +116,6 @@ document.querySelectorAll('.welle').forEach(function (el) {
       var s = document.createElement('span');
       s.className = 'buchstabe';
       s.textContent = b;
-      // Jeder Buchstabe startet etwas später -> es entsteht eine Welle
       s.style.animationDelay = (zaehler * 0.1 - 3) + 's';
       zaehler++;
       w.appendChild(s);
@@ -105,6 +123,20 @@ document.querySelectorAll('.welle').forEach(function (el) {
     el.appendChild(w);
     if (n < woerter.length - 1) el.appendChild(document.createTextNode(' '));
   });
+});
+
+var feuer = new Audio('lagerfeuer.mp3');
+feuer.loop = true;
+document.getElementById('lagerfeuer').addEventListener('click', function () {
+  if (feuer.paused) { feuer.play(); } else { feuer.pause(); }
+});
+
+var hundSound = new Audio('hund.mp3');
+var hund = document.getElementById('hund');
+hund.addEventListener('click', function () {
+  hund.classList.add('revealed');
+  hundSound.currentTime = 0;
+  hundSound.play();
 });
 </script>
 </body>
