@@ -30,7 +30,8 @@ img{max-width:100%}
   font-weight:bold;
   font-size:1.5em;
 }
-.knopf:hover{background:darkorange}
+.knopf:hover{background:rgb(35, 55, 200)}
+
 
 .mittig{
   min-height:55vh;
@@ -88,7 +89,7 @@ img{max-width:100%}
   margin:24px 0;         /* kleiner Bildschirm: Box steht unter dem Inhalt */
   position:relative;
   border:3px solid rgb(57, 82, 241);
-  border-radius:14px;
+  border-radius:8px;
   background:#eef1ff;
   overflow:hidden;
   padding-bottom:56px;   /* Platz für das Zeitungs-Symbol */
@@ -229,11 +230,18 @@ img{max-width:100%}
      Dazwischen kommt der Inhalt als normales HTML (<p>, <img>, <a> ...).
      ===================================================================== -->
 
-<template class="eintrag" data-datum="2026-10-19" data-titel="Meine Website ist online!">
+<template class="eintrag" data-datum="2026-10-18" data-titel="Meine Website ist online!">
   <p>Hallo und willkommen auf meiner neuen Website! Hier schreibe ich in Zukunft über meine Projekte, Ideen und irgendwelche Neuigkeiten aus meinem Leben.</p>
   <p>PS: Irgendwo auf dieser Seite ist ein Hund versteckt. Findest du ihn?</p>
 </template>
 
+<template class="eintrag" data-datum="2026-10-19" data-titel="Elias ist ein goy">
+  <h2>Breaking News!</h2>
+  <p>Elias ist ein goy!!!</p>
+  <img src="goy.jpg" alt="Elisa der goy">
+  <p>Elias ist ein soy goy und nutzt Chatgpt um zu vibecoden.</p>
+</template>
+  
   <!--
 <template class="eintrag" data-datum="2026-10-18" data-titel="Beispiel mit Bild (bitte löschen)">
   <p>So sieht ein Eintrag mit Bild aus:</p>
@@ -498,7 +506,7 @@ eintraege.slice(0, 3).forEach(function (e) {
   var zeile = document.createElement('div');
   zeile.className = 'news-zeile';
   var d = document.createElement('b');
-  d.textContent = kurzDatum(e.datum) + ': ';
+  d.textContent = kurzDatum(e.datum) + ' ';
   zeile.appendChild(d);
   zeile.appendChild(eintragLink(e));
   newsListe.appendChild(zeile);
