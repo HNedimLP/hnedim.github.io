@@ -31,6 +31,9 @@ img{max-width:100%}
   font-size:1.5em;
 }
 .knopf:hover{background:rgb(35, 55, 200)}
+/* Gästebuch-Knopf: gleicher Stil, nur orangebraun */
+.knopf-gaeste{background:rgb(196, 98, 16);margin-top:16px}
+.knopf-gaeste:hover{background:rgb(143, 69, 8)}
 
 
 .mittig{
@@ -121,7 +124,7 @@ img{max-width:100%}
     top:50%;
     right:10px;
     transform:translateY(-50%);
-    width:240px;
+    width:320px;4
     margin:0;
     z-index:50;
   }
@@ -196,6 +199,7 @@ img{max-width:100%}
 <div class="mittig">
   <h1 class="welle">Willkommen auf meiner Website!</h1>
   <a class="knopf" href="portfolio.html">PORTFOLIO</a>
+  <a class="knopf knopf-gaeste" href="gaestebuch.html">GÄSTEBUCH</a>
 </div>
 
 <div class="block">
@@ -230,11 +234,19 @@ img{max-width:100%}
      Dazwischen kommt der Inhalt als normales HTML (<p>, <img>, <a> ...).
      ===================================================================== -->
 
-<template class="eintrag" data-datum="2026-10-18" data-titel="Meine Website ist online!">
+<template class="eintrag" data-datum="2026-10-17" data-titel="Meine Website ist online!">
   <p>Hallo und willkommen auf meiner neuen Website! Hier schreibe ich in Zukunft über meine Projekte, Ideen und irgendwelche Neuigkeiten aus meinem Leben.</p>
   <p>PS: Irgendwo auf dieser Seite ist ein Hund versteckt. Findest du ihn?</p>
 </template>
   
+<template class="eintrag" data-datum="2026-10-19" data-titel="Das Gästebuch">
+  <h3>Freunde das Gästebuch steht! </h3>
+  <p>Ihr könnt jetzt auf meiner Website eine persönliche Nachricht hinterlassen, aber seid bitte nett ;) </p>
+  <img src="gaeste-release.png" alt="Book UI V1 aus der Pixel Vault Series. Hab ich für 3 Euro gekauft">
+  <p>Mit Firebase war das echt einfach eine Datenbank dafür zu hinterlegen, ich dachte das wär ein großes und teures Ding aber ging voll, ich kann ne Menge Daten speichern bevor ich da war zahlen muss.</p>
+  <p>Jetzt gibt nur die Frage wofür ich die Datenbank noch so nutzen werde. Was wird in Zukunft auf HNedim.de noch geben? Minispiele mit Ranglisten? Ein Chat? Eine Funktion zum Anmelden?</p>
+  <p>Ich denke mal das steht alles noch in den Sternen...</p>
+</template>
   <!--
 <template class="eintrag" data-datum="2026-10-18" data-titel="Beispiel mit Bild (bitte löschen)">
   <p>So sieht ein Eintrag mit Bild aus:</p>
