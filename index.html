@@ -33,7 +33,7 @@ img{max-width:100%}
 .knopf:hover{background:darkorange}
 
 .mittig{
-  min-height:65vh;
+  min-height:55vh;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -73,7 +73,7 @@ img{max-width:100%}
 .zeichen{visibility:hidden}  
 .zeichen.an{visibility:visible}
 
-#hnedim{cursor:pointer}
+#hnedim{cursor:pointer;touch-action:manipulation}
 
 #lagerfeuer{
   cursor:pointer;
@@ -81,6 +81,97 @@ img{max-width:100%}
   position:relative;
   top:20px;
 }
+
+
+/* ===== News-Box ===== */
+.news{
+  margin:24px 0;         /* kleiner Bildschirm: Box steht unter dem Inhalt */
+  position:relative;
+  border:3px solid rgb(57, 82, 241);
+  border-radius:14px;
+  background:#eef1ff;
+  overflow:hidden;
+  padding-bottom:56px;   /* Platz für das Zeitungs-Symbol */
+  font-family:"Determination","Courier New",monospace;
+}
+.news h2{
+  margin:0 0 10px;
+  padding:12px;
+  text-align:center;
+  background:rgb(57, 82, 241);
+  color:#fff;
+  font-family:"Thunderman",Arial,sans-serif;
+  font-size:1.6em;
+}
+.news-zeile{padding:8px 12px;margin:10px 0;font-size:1.15em}
+.news-zeile:nth-child(3n+1){background:#ffd9b8}
+.news-zeile:nth-child(3n+2){background:#dfe4ff}
+.news-zeile:nth-child(3n+3){background:#fff0b8}
+.news a{color:#1a2fb5}
+.news a:hover{color:darkorange}
+.news-mehr{padding:8px 12px;font-size:1.15em}
+.news-leer{padding:8px 12px;margin:0}
+
+/* Großer Bildschirm: Box schwebt rechts in der Mitte und schiebt nichts.
+   Ab dieser Breite (1500px) ist rechts neben dem Inhalt genug Platz. */
+@media (min-width:1500px){
+  .news{
+    position:fixed;
+    top:50%;
+    right:10px;
+    transform:translateY(-50%);
+    width:240px;
+    margin:0;
+    z-index:50;
+  }
+}
+
+/* ===== Verschiebbare Fenster ===== */
+.fenster{
+  position:fixed;
+  width:min(460px, 92vw);
+  max-height:75vh;
+  display:flex;
+  flex-direction:column;
+  background:#fff;
+  color:#111;
+  border:3px solid rgb(57, 82, 241);
+  border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+  overflow:hidden;
+}
+.fenster-kopf{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  background:rgb(57, 82, 241);
+  color:#fff;
+  font-family:"Determination","Courier New",monospace;
+  font-size:1.25em;
+  cursor:move;
+  user-select:none;
+  touch-action:none;   /* damit man das Fenster auf dem Handy ziehen kann */
+}
+.fenster-titel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fenster-zu{
+  flex:none;
+  width:30px;
+  height:30px;
+  border:0;
+  border-radius:6px;
+  background:#fff;
+  color:rgb(57, 82, 241);
+  font-size:1em;
+  font-weight:bold;
+  cursor:pointer;
+}
+.fenster-zu:hover{background:darkorange;color:#fff}
+.fenster-inhalt{padding:14px;overflow:auto;font-family:Arial,sans-serif;line-height:1.5}
+.fenster-inhalt img,.fenster-inhalt iframe,.fenster-inhalt video{max-width:100%}
+.fenster-datum{margin-bottom:10px;color:#555;font-size:.9em}
+.alle-zeile{padding:6px 0;border-bottom:1px solid #ddd}
 
 
 #hund{
@@ -98,6 +189,9 @@ img{max-width:100%}
 </head>
 <body>
 
+<div class="seite">
+<main class="haupt">
+
 <div class="mittig">
   <h1 class="welle">Willkommen auf meiner Website!</h1>
   <a class="knopf" href="portfolio.html">PORTFOLIO</a>
@@ -114,8 +208,42 @@ img{max-width:100%}
   <img src="lagerfeuer.gif" id="lagerfeuer" alt="Lagerfeuer" title="Klick mich">
 </div>
 
+</main>
+
+<aside class="news" aria-label="Blog-News">
+  <h2>News</h2>
+  <div id="news-liste"></div>
+  <div class="news-mehr"><a href="#" id="news-mehr">Mehr lesen…</a></div>
+</aside>
+</div>
+
 <p><a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a></p>
 
+
+<!-- =====================================================================
+     BLOG-EINTRÄGE
+     Für einen neuen Eintrag: einen ganzen <template>-Block kopieren, einfügen
+     und anpassen. Die Reihenfolge ist egal, sortiert wird nach dem Datum.
+       data-datum  = Datum im Format JJJJ-MM-TT  (z. B. 2026-10-19)
+       data-titel  = Überschrift, die in der News-Box und im Fenster steht
+     Dazwischen kommt der Inhalt als normales HTML (<p>, <img>, <a> ...).
+     ===================================================================== -->
+
+<template class="eintrag" data-datum="2026-10-19" data-titel="Meine Website ist online!">
+  <p>Hallo und willkommen auf meiner neuen Website! Hier schreibe ich in Zukunft über meine Projekte, Ideen und irgendwelche Neuigkeiten aus meinem Leben.</p>
+  <p>PS: Irgendwo auf dieser Seite ist ein Hund versteckt. Findest du ihn?</p>
+</template>
+
+  <!--
+<template class="eintrag" data-datum="2026-10-18" data-titel="Beispiel mit Bild (bitte löschen)">
+  <p>So sieht ein Eintrag mit Bild aus:</p>
+  <img src="hnedim.gif" alt="Beschreibung des Bildes">
+  <p>Ein YouTube-Video bindest du so ein (VIDEO_ID durch die ID aus dem Link ersetzen):</p>
+  <!--
+  <iframe width="420" height="236" src="https://www.youtube.com/embed/VIDEO_ID" allowfullscreen></iframe>
+  
+</template>
+-->
 <img src="hund.gif" id="hund" alt="Versteckter Hund">
 
 <script>
@@ -157,7 +285,6 @@ hund.addEventListener('click', function () {
   hundSound.play();
 });
 
-// Jeden Satz in einzelne, noch unsichtbare Buchstaben zerlegen
 var saetze = Array.prototype.map.call(document.querySelectorAll('#dialog .zeile'), function (p) {
   var text = p.textContent.trim();
   p.setAttribute('aria-label', text);
@@ -174,25 +301,37 @@ var saetze = Array.prototype.map.call(document.querySelectorAll('#dialog .zeile'
   return buchstaben;
 });
 
-var beep = new Audio('beep.mp3');
-beep.preload = 'auto';
+var AudioCtx = window.AudioContext || window.webkitAudioContext;
+var audioCtx = new AudioCtx();
+var beepBuffer = null;
+fetch('beep.mp3')
+  .then(function (r) { return r.arrayBuffer(); })
+  .then(function (data) {
+    return new Promise(function (ok, fehler) { audioCtx.decodeAudioData(data, ok, fehler); });
+  })
+  .then(function (buf) { beepBuffer = buf; })
+  .catch(function () {});
+
 function blip() {
-  var b = beep.cloneNode();
-  b.play().catch(function () {});
+  if (!beepBuffer) return;
+  var quelle = audioCtx.createBufferSource();
+  quelle.buffer = beepBuffer;
+  quelle.connect(audioCtx.destination);
+  quelle.start(0);
 }
 
-var aktuell = -1;      // welcher Satz gerade dran ist
-var tippt = false;     // läuft der Satz noch?
+var aktuell = -1;      
+var tippt = false;    
 var timer = null;
 var hnedimBild = document.getElementById('hnedim');
 
 function satzFertig() {
   tippt = false;
-  if (aktuell >= saetze.length - 1) hnedimBild.style.cursor = 'default';  // letzter Satz: nichts mehr zu klicken
+  if (aktuell >= saetze.length - 1) hnedimBild.style.cursor = 'default'; 
 }
 
 function starteSatz(n) {
-  if (aktuell >= 0) {   // vorherigen Satz ausblenden
+  if (aktuell >= 0) {   
     saetze[aktuell].forEach(function (z) { z.classList.remove('an'); });
   }
   aktuell = n;
@@ -206,21 +345,183 @@ function starteSatz(n) {
     i++;
     var c = z.textContent;
     if (c !== ' ' && ',.!?'.indexOf(c) === -1) blip();
-    // kleine Pause nach Satzzeichen, wie im Spiel
-    var pause = ',.!?'.indexOf(c) !== -1 ? 250 : 40;
+    var pause = ',.!?'.indexOf(c) !== -1 ? 250 : 50;
     timer = setTimeout(weiter, pause);
   })();
 }
 
 hnedimBild.addEventListener('click', function () {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
   if (tippt) {
-    // Klick während des Tippens: Satz sofort komplett anzeigen
     clearTimeout(timer);
     saetze[aktuell].forEach(function (z) { z.classList.add('an'); });
     satzFertig();
   } else if (aktuell < saetze.length - 1) {
     starteSatz(aktuell + 1);
   }
+});
+
+// ===================== BLOG: News-Box und Fenster =====================
+var eintraege = Array.prototype.map.call(document.querySelectorAll('template.eintrag'), function (t) {
+  return { datum: t.getAttribute('data-datum'), titel: t.getAttribute('data-titel'), vorlage: t };
+}).sort(function (a, b) {
+  return a.datum < b.datum ? 1 : (a.datum > b.datum ? -1 : 0);   // neueste zuerst
+});
+
+function kurzDatum(d) {
+  return new Date(d).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+}
+function langDatum(d) {
+  return new Date(d).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
+
+var hoechsterZ = 100;
+var offeneFenster = {};
+var versatz = 0;
+
+function nachVorn(f) {
+  hoechsterZ++;
+  f.style.zIndex = hoechsterZ;
+}
+
+// Öffnet ein Fenster mit Titelleiste (zum Ziehen) und Schließen-Knopf.
+// Ist das Fenster mit dieser id schon offen, kommt es nur nach vorne.
+function oeffneFenster(id, titel, inhalt) {
+  if (offeneFenster[id]) { nachVorn(offeneFenster[id]); return; }
+
+  var f = document.createElement('div');
+  f.className = 'fenster';
+  f.setAttribute('role', 'dialog');
+  f.setAttribute('aria-label', titel);
+
+  var kopf = document.createElement('div');
+  kopf.className = 'fenster-kopf';
+  var t = document.createElement('span');
+  t.className = 'fenster-titel';
+  t.textContent = titel;
+  var zu = document.createElement('button');
+  zu.type = 'button';
+  zu.className = 'fenster-zu';
+  zu.setAttribute('aria-label', 'Fenster schließen');
+  zu.textContent = '✕';
+  kopf.appendChild(t);
+  kopf.appendChild(zu);
+
+  var koerper = document.createElement('div');
+  koerper.className = 'fenster-inhalt';
+  koerper.appendChild(inhalt);
+
+  f.appendChild(kopf);
+  f.appendChild(koerper);
+
+  // Startposition: ungefähr in der Mitte, jedes neue Fenster etwas versetzt
+  versatz = (versatz + 28) % 140;
+  var breite = Math.min(460, window.innerWidth * 0.92);
+  f.style.left = Math.max(8, (window.innerWidth - breite) / 2 - 70 + versatz) + 'px';
+  f.style.top = (70 + versatz) + 'px';
+
+  // Ziehen (Maus und Finger)
+  kopf.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('button')) return;
+    var r = f.getBoundingClientRect();
+    var dx = e.clientX - r.left;
+    var dy = e.clientY - r.top;
+    kopf.setPointerCapture(e.pointerId);
+    function bewege(ev) {
+      var x = Math.min(Math.max(0, ev.clientX - dx), window.innerWidth - f.offsetWidth);
+      var y = Math.min(Math.max(0, ev.clientY - dy), window.innerHeight - kopf.offsetHeight);
+      f.style.left = x + 'px';
+      f.style.top = y + 'px';
+    }
+    function ende() {
+      kopf.removeEventListener('pointermove', bewege);
+      kopf.removeEventListener('pointerup', ende);
+      kopf.removeEventListener('pointercancel', ende);
+    }
+    kopf.addEventListener('pointermove', bewege);
+    kopf.addEventListener('pointerup', ende);
+    kopf.addEventListener('pointercancel', ende);
+  });
+
+  zu.addEventListener('click', function () {
+    f.remove();
+    delete offeneFenster[id];
+  });
+  f.addEventListener('pointerdown', function () { nachVorn(f); });
+
+  offeneFenster[id] = f;
+  document.body.appendChild(f);
+  nachVorn(f);
+}
+
+// Esc schließt das oberste Fenster
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  var oberstes = null;
+  Object.keys(offeneFenster).forEach(function (k) {
+    var f = offeneFenster[k];
+    if (!oberstes || +f.style.zIndex > +oberstes.style.zIndex) oberstes = f;
+  });
+  if (oberstes) oberstes.querySelector('.fenster-zu').click();
+});
+
+function oeffneEintrag(e) {
+  var inhalt = document.createElement('div');
+  var d = document.createElement('div');
+  d.className = 'fenster-datum';
+  d.textContent = langDatum(e.datum);
+  inhalt.appendChild(d);
+  inhalt.appendChild(e.vorlage.content.cloneNode(true));
+  oeffneFenster('e:' + e.datum + e.titel, e.titel, inhalt);
+}
+
+function eintragLink(e) {
+  var a = document.createElement('a');
+  a.href = '#';
+  a.textContent = e.titel;
+  a.addEventListener('click', function (ev) {
+    ev.preventDefault();
+    oeffneEintrag(e);
+  });
+  return a;
+}
+
+// News-Box füllen: die 3 neuesten Einträge
+var newsListe = document.getElementById('news-liste');
+if (eintraege.length === 0) {
+  var leer = document.createElement('p');
+  leer.className = 'news-leer';
+  leer.textContent = 'Noch keine Einträge.';
+  newsListe.appendChild(leer);
+}
+eintraege.slice(0, 3).forEach(function (e) {
+  var zeile = document.createElement('div');
+  zeile.className = 'news-zeile';
+  var d = document.createElement('b');
+  d.textContent = kurzDatum(e.datum) + ': ';
+  zeile.appendChild(d);
+  zeile.appendChild(eintragLink(e));
+  newsListe.appendChild(zeile);
+});
+
+// "Mehr lesen…": Fenster mit allen Einträgen (nur sichtbar, wenn es mehr als 3 gibt)
+var mehrLink = document.getElementById('news-mehr');
+if (eintraege.length <= 3) {
+  mehrLink.parentNode.style.display = 'none';
+}
+mehrLink.addEventListener('click', function (ev) {
+  ev.preventDefault();
+  var liste = document.createElement('div');
+  eintraege.forEach(function (e) {
+    var z = document.createElement('div');
+    z.className = 'alle-zeile';
+    var d = document.createElement('b');
+    d.textContent = langDatum(e.datum) + ': ';
+    z.appendChild(d);
+    z.appendChild(eintragLink(e));
+    liste.appendChild(z);
+  });
+  oeffneFenster('alle', 'Alle Einträge', liste);
 });
 </script>
 </body>
