@@ -87,6 +87,51 @@ img{max-width:100%}
 }
 
 
+/* ===== Handy-Layout =====
+   Oben stehen Nedim und das Lagerfeuer nebeneinander auf einer Linie,
+   darunter kommt der Dialog wie eine Textbox im Spiel. */
+@media (max-width:600px){
+  .mittig{min-height:auto;padding:5vh 0 3vh}
+  .mittig .welle{margin-bottom:28px}
+  .knopf{
+    display:block;
+    width:100%;
+    max-width:320px;
+    box-sizing:border-box;
+    text-align:center;
+    font-size:1.35em;
+  }
+  .knopf-gaeste{margin-top:12px}
+
+  .block{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-areas:
+      "nedim feuer"
+      "text  text";
+    align-items:end;
+    gap:16px 10px;
+    padding:16px;
+    margin:24px 0;
+  }
+  .block img{image-rendering:pixelated}
+  #hnedim{
+    grid-area:nedim;
+    width:100%;
+    max-width:150px;
+    justify-self:center;
+  }
+  #lagerfeuer{
+    grid-area:feuer;
+    width:100%;
+    max-width:130px;
+    justify-self:center;
+    top:0;
+  }
+  .block .text{grid-area:text}
+  #dialog .zeile{font-size:1.2em}
+}
+
 /* ===== News-Box ===== */
 .news{
   margin:24px 0;         /* kleiner Bildschirm: Box steht unter dem Inhalt */
@@ -124,7 +169,7 @@ img{max-width:100%}
     top:50%;
     right:10px;
     transform:translateY(-50%);
-    width:320px;4
+    width:320px;
     margin:0;
     z-index:50;
   }
