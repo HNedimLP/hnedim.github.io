@@ -114,6 +114,28 @@ img{max-width:100%}
 .hinweis{margin-top:10px;font-size:.9em}
 .zaehler{font-size:.8em;text-align:right;color:#888}
 .fall{position:absolute;left:-9999px}  
+
+.neu-handy{display:none}
+@media (max-width:700px){
+  .neu-wrap{display:none}
+  :root{--zoom:1.2}   /* Buch-Vergrößerung am Handy: größer = weniger Rand */
+  body{overflow-x:hidden}
+  .buch{
+    width:calc(100% * var(--zoom));
+    margin-left:calc((1 - var(--zoom)) / 2 * 100%);
+    margin-bottom:20px;
+  }
+  .neu-handy{
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    width:100%;margin:0 0 20px;padding:20px 16px;
+    border:0;border-radius:14px;
+    background:var(--braun);color:#fff;
+    font-family:"ComicRelief","Comic Sans MS",cursive;font-size:1.7em;font-weight:bold;
+    cursor:pointer;
+  }
+  .neu-handy:active{background:var(--braun-dunkel)}
+  .neu-handy svg{width:1.2em;height:1.2em;flex:none}
+}
 </style>
 </head>
 <body>
@@ -134,6 +156,10 @@ img{max-width:100%}
   <button class="pfeil pfeil-l weg" id="p-l" type="button" aria-label="Zurückblättern"><img src="lpfeil.png" alt=""></button>
   <button class="pfeil pfeil-r weg" id="p-r" type="button" aria-label="Weiterblättern"><img src="rpfeil.png" alt=""></button>
 </div>
+<button class="neu-handy" id="neu-handy" type="button">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+  Eintrag erstellen
+</button>
 <p class="status" id="status"></p>
 
 <p><a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a></p>
@@ -210,7 +236,7 @@ async function laden() {
 }
 
 let fenster = null;
-document.getElementById('neu').addEventListener('click', () => {
+function oeffneFenster() {
   if (fenster) return;
   const f = document.createElement('div');
   f.className = 'fenster';
@@ -268,7 +294,9 @@ document.getElementById('neu').addEventListener('click', () => {
       senden.disabled = false;
     }
   });
-});
+}
+document.getElementById('neu').addEventListener('click', oeffneFenster);
+document.getElementById('neu-handy').addEventListener('click', oeffneFenster);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && fenster) fenster.querySelector('.fenster-zu').click(); });
 
 laden();
