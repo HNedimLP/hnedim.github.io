@@ -1168,6 +1168,7 @@ async function firebaseLaden() {
 
   fb.au.onAuthStateChanged(fb.auth, async function (user) {
     const vorher = ich;
+    if (user && !istSpieler(user)) user = null;   // fremde Konten (z. B. Admin) ignorieren, niemals löschen oder abmelden
     ich = user;
     if (authBeschaeftigt) { authFertig(); return; }
     if (user) {
@@ -1314,6 +1315,9 @@ function zeichneFuss() {
     knopf('Eintrag löschen', 'rang-link', eintragLoeschen);
   }
 }
+
+// Nur Konten mit der Fake-Mail aus nameZuMail() gehören zum Spiel
+function istSpieler(user) { return !!(user && user.email && user.email.endsWith('@fischen.hnedim.de')); }
 
 // ----- Name -> Fake-Mail, damit Firebase Auth benutzt werden kann (der Nutzer sieht nie eine Mail) -----
 async function nameZuMail(name) {

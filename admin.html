@@ -59,13 +59,13 @@ $('anmelden').addEventListener('click', async () => {
 });
 $('abmelden').addEventListener('click', () => signOut(auth));
 
-const ADMIN_UID = 'AY1FxscQqDOt2dcLB6Lii3CrYdX2';   // muss zu firestore.rules passen
+const ADMIN_UID = '7h3LaDHipsPmQ6V94k3d7YU65TS2';   // muss zu firestore.rules passen
 onAuthStateChanged(auth, user => {
   const istAdmin = !!user && user.uid === ADMIN_UID;
   $('login').hidden = istAdmin;
   $('bereich').hidden = !istAdmin;
   if (istAdmin) laden();
-  else if (user) fehler.textContent = 'Du bist gerade mit einem anderen Konto angemeldet (z. B. als Fischen-Spieler). Melde dich hier mit deiner Admin-Mail an.';
+  else if (user) fehler.textContent = 'Du bist gerade mit einem anderen Konto angemeldet (z. B. als Fischen-Spieler). Melde dich hier mit deiner Admin-Mail an. (Aktuelle UID: ' + user.uid + ')';
 });
 
 function karte(d, offen) {
