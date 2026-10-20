@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gästebuch | Nedim Humackic</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+@font-face{font-family:"Thunderman";src:url("Thunderman.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"ComicRelief";src:url("ComicRelief-400.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"ComicRelief";src:url("ComicRelief-700.woff2") format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Determination";src:url("determination.ttf") format("truetype");font-display:swap}
+body{font-family:"Thunderman",Arial,sans-serif;max-width:1200px;margin:auto;padding:10px;position:relative}
+button{font-family:inherit}
+img{max-width:100%}
+
+:root{--braun:rgb(196,98,16);--braun-dunkel:rgb(143,69,8);--braun-hell:#fff1e3}
+
+.zurueck{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 15px;border-radius:8px;
+  background:var(--braun);color:#fff;text-decoration:none;
+  font-weight:bold;font-size:1.3em;
+}
+.zurueck:hover{background:var(--braun-dunkel)}
+
+.buch{position:relative;width:100%;margin-top:20px;margin-bottom:100px;container-type:inline-size}
+.buch-bild{display:block;width:100%}
+
+.seite{
+  position:absolute;
+  display:flex;flex-direction:column;gap:3%;
+  font-family:"ComicRelief","Comic Sans MS",cursive;
+  font-size:max(12px,1.5cqw);   
+  line-height:1.25;
+  color:#3b2410;
+}
+
+.seite-l{left:15%;top:22%;width:31%;height:52%}
+
+.seite-r{left:53.5%;top:22%;width:31%;height:52%}
+
+.titel{
+  position:absolute;left:30%;top:15.2%;transform:translate(-50%,-50%);
+  margin:0;white-space:nowrap;
+  font-family:"ComicRelief","Comic Sans MS",cursive;font-size:3cqw;color:#3b2410;
+}
+
+.neu-wrap{
+  position:absolute;left:74%;top:15.2%;transform:translate(-50%,-50%);
+  display:inline-flex;align-items:center;gap:.5em;white-space:nowrap;
+  font-family:"ComicRelief","Comic Sans MS",cursive;font-size:2.2cqw;font-weight:bold;color:#3b2410;
+}
+.neu{
+  position:relative;top:0px;font-size:inherit;padding:0;border:0;background:none;color:#3b2410;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.neu svg{width:1em;height:1em;display:block}
+.neu:hover svg{animation:dreh 1s ease}   
+@keyframes dreh{to{transform:rotate(360deg)}}
+
+.pfeil{position:absolute;bottom:16%;width:4.5%;padding:0;border:0;background:none;cursor:pointer}
+.pfeil img{display:block;width:100%}
+.pfeil-l{left:14%}
+.pfeil-r{right:15.5%}
+.pfeil:hover{transform:scale(1.08)}
+.pfeil.weg{opacity:.35;pointer-events:none;cursor:default}
+
+.eintrag{
+  flex:1 1 0;min-height:0;overflow:auto;
+  padding:1% 0;
+}
+.eintrag-kopf{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.eintrag-name{font-weight:bold;overflow-wrap:anywhere}
+.eintrag-datum{font-size:.8em;opacity:.75;white-space:nowrap}   
+.eintrag-text{margin:.4em 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.leer{font-style:italic;text-align:center;margin-top:20%}
+.status{text-align:center;font-family:"ComicRelief","Comic Sans MS",cursive}
+
+.fenster{
+  position:fixed;width:min(460px,92vw);max-height:80vh;
+  display:flex;flex-direction:column;
+  background:#fff;color:#111;
+  border:3px solid var(--braun);border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden;z-index:200;
+}
+.fenster-kopf{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:8px 10px;background:var(--braun);color:#fff;
+  font-family:"ComicRelief","Comic Sans MS",cursive;font-size:1.25em;
+  cursor:move;user-select:none;touch-action:none;
+}
+.fenster-zu{
+  flex:none;width:30px;height:30px;border:0;border-radius:6px;
+  background:#fff;color:var(--braun);font-weight:bold;cursor:pointer;
+}
+.fenster-zu:hover{background:var(--braun-dunkel);color:#fff}
+.fenster-inhalt{padding:14px;overflow:auto;background:var(--braun-hell);
+  font-family:"ComicRelief","Comic Sans MS",cursive;line-height:1.4}
+.fenster label{display:block;margin:10px 0 4px;font-weight:bold}
+.fenster input[type=text],.fenster textarea{
+  width:100%;box-sizing:border-box;padding:8px;
+  border:2px solid var(--braun);border-radius:6px;
+  font-family:"ComicRelief","Comic Sans MS",cursive;font-size:1em;background:#fff;color:#111;
+}
+.fenster textarea{min-height:110px;resize:vertical}
+.fenster ::placeholder{color:#888;opacity:1}   
+.fenster .senden{
+  margin-top:14px;padding:8px 16px;border:0;border-radius:8px;
+  background:var(--braun);color:#fff;font-weight:bold;font-size:1.1em;cursor:pointer;
+}
+.fenster .senden:hover{background:var(--braun-dunkel)}
+.fenster .senden:disabled{opacity:.6;cursor:wait}
+.hinweis{margin-top:10px;font-size:.9em}
+.zaehler{font-size:.8em;text-align:right;color:#888}
+.fall{position:absolute;left:-9999px}  
+
+.neu-handy{display:none}
+@media (max-width:700px){
+  .neu-wrap{display:none}
+  :root{--zoom:1.2}   /* Buch-Vergrößerung am Handy: größer = weniger Rand */
+  body{overflow-x:hidden}
+  .buch{
+    width:calc(100% * var(--zoom));
+    margin-left:calc((1 - var(--zoom)) / 2 * 100%);
+    margin-bottom:20px;
+  }
+  .neu-handy{
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    width:100%;margin:0 0 20px;padding:20px 16px;
+    border:0;border-radius:14px;
+    background:var(--braun);color:#fff;
+    font-family:"ComicRelief","Comic Sans MS",cursive;font-size:1.7em;font-weight:bold;
+    cursor:pointer;
+  }
+  .neu-handy:active{background:var(--braun-dunkel)}
+  .neu-handy svg{width:1.2em;height:1.2em;flex:none}
+}
+</style>
+</head>
+<body>
+
+<a class="zurueck" href="index.html">← Zurück</a>
+
+<div class="buch">
+  <img class="buch-bild" src="buch.png" alt="">
+  <h1 class="titel">GÄSTEBUCH</h1>
+  <div class="neu-wrap">
+    <button class="neu" id="neu" type="button" aria-label="Neuen Eintrag erstellen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+    </button>
+    <span>Eintrag erstellen</span>
+  </div>
+  <div class="seite seite-l" id="seite-l"></div>
+  <div class="seite seite-r" id="seite-r"></div>
+  <button class="pfeil pfeil-l weg" id="p-l" type="button" aria-label="Zurückblättern"><img src="lpfeil.png" alt=""></button>
+  <button class="pfeil pfeil-r weg" id="p-r" type="button" aria-label="Weiterblättern"><img src="rpfeil.png" alt=""></button>
+</div>
+<button class="neu-handy" id="neu-handy" type="button">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+  Eintrag erstellen
+</button>
+<p class="status" id="status"></p>
+
+<p><a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a></p>
+
+<script type="module">
+import { firebaseConfig } from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+const EINTRAEGE_PRO_SEITE = 3;
+const MAX_ZEICHEN = 150;
+
+const eingerichtet = !firebaseConfig.apiKey.startsWith('DEIN');
+const db = eingerichtet ? getFirestore(initializeApp(firebaseConfig)) : null;
+const sl = document.getElementById('seite-l');
+const sr = document.getElementById('seite-r');
+const pl = document.getElementById('p-l');
+const pr = document.getElementById('p-r');
+const status = document.getElementById('status');
+let alle = [], blatt = 0;
+
+function datumText(ts) {
+  return ts.toDate().toLocaleString('de-DE', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function eintragEl(e) {
+  const d = document.createElement('div');
+  d.className = 'eintrag';
+  const kopf = document.createElement('div');
+  kopf.className = 'eintrag-kopf';
+  const n = document.createElement('span');
+  n.className = 'eintrag-name';
+  n.textContent = e.name;
+  const t = document.createElement('span');
+  t.className = 'eintrag-datum';
+  t.textContent = datumText(e.createdAt);
+  kopf.append(n, t);
+  const m = document.createElement('p');
+  m.className = 'eintrag-text';
+  m.textContent = e.nachricht;
+  d.append(kopf, m);
+  return d;
+}
+
+function zeige() {
+  const pro = EINTRAEGE_PRO_SEITE, start = blatt * pro * 2;
+  sl.replaceChildren(); sr.replaceChildren();
+  alle.slice(start, start + pro).forEach(e => sl.appendChild(eintragEl(e)));
+  alle.slice(start + pro, start + 2 * pro).forEach(e => sr.appendChild(eintragEl(e)));
+  if (!alle.length) {
+    const p = document.createElement('p');
+    p.className = 'leer';
+    p.textContent = 'Noch keine Einträge. Sei der Erste!';
+    sl.appendChild(p);
+  }
+  pl.classList.toggle('weg', blatt === 0);
+  pr.classList.toggle('weg', start + 2 * pro >= alle.length);
+}
+pl.addEventListener('click', () => { blatt--; zeige(); });
+pr.addEventListener('click', () => { blatt++; zeige(); });
+
+async function laden() {
+  if (!eingerichtet) { status.textContent = 'Das Gästebuch ist noch nicht eingerichtet (firebase-config.js).'; zeige(); return; }
+  try {
+    const snap = await getDocs(query(collection(db, 'gaestebuch'), where('approved', '==', true)));
+    alle = snap.docs.map(d => d.data()).sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+  } catch (err) {
+    status.textContent = 'Einträge konnten nicht geladen werden.';
+  }
+  zeige();
+}
+
+let fenster = null;
+function oeffneFenster() {
+  if (fenster) return;
+  const f = document.createElement('div');
+  f.className = 'fenster';
+  f.setAttribute('role', 'dialog');
+  f.innerHTML =
+    '<div class="fenster-kopf"><span>Neuer Eintrag</span><button type="button" class="fenster-zu" aria-label="Fenster schließen">✕</button></div>' +
+    '<div class="fenster-inhalt"><div id="formular">' +
+    '<label for="f-name">Name</label><input type="text" id="f-name" maxlength="30" autocomplete="nickname">' +
+    '<label for="f-text">Nachricht</label><textarea id="f-text" maxlength="' + MAX_ZEICHEN + '" placeholder="Schreib etwas nettes :)"></textarea>' +
+    '<div class="zaehler" id="f-zaehler">0 / ' + MAX_ZEICHEN + '</div>' +
+    '<input type="text" class="fall" id="f-fall" tabindex="-1" autocomplete="off" aria-hidden="true">' +
+    '<button type="button" class="senden" id="f-senden">Absenden</button>' +
+    '<p class="hinweis" id="f-hinweis">Dein Eintrag erscheint erst, wenn ich ihn gecheckt hab.</p>' +
+    '</div></div>';
+  const breite = Math.min(460, window.innerWidth * 0.92);
+  f.style.left = Math.max(8, (window.innerWidth - breite) / 2) + 'px';
+  f.style.top = '90px';
+  document.body.appendChild(f);
+  fenster = f;
+
+  const kopf = f.querySelector('.fenster-kopf');
+  kopf.addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    const r = f.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+    kopf.setPointerCapture(e.pointerId);
+    const bewege = ev => {
+      f.style.left = Math.min(Math.max(0, ev.clientX - dx), window.innerWidth - f.offsetWidth) + 'px';
+      f.style.top = Math.min(Math.max(0, ev.clientY - dy), window.innerHeight - kopf.offsetHeight) + 'px';
+    };
+    const ende = () => { kopf.removeEventListener('pointermove', bewege); kopf.removeEventListener('pointerup', ende); };
+    kopf.addEventListener('pointermove', bewege);
+    kopf.addEventListener('pointerup', ende);
+  });
+  const ta = f.querySelector('#f-text'), zaehler = f.querySelector('#f-zaehler');
+  ta.addEventListener('input', () => { zaehler.textContent = ta.value.length + ' / ' + MAX_ZEICHEN; });
+  const zu = () => { f.remove(); fenster = null; };
+  f.querySelector('.fenster-zu').addEventListener('click', zu);
+
+  const hinweis = f.querySelector('#f-hinweis');
+  const senden = f.querySelector('#f-senden');
+  senden.addEventListener('click', async () => {
+    const name = f.querySelector('#f-name').value.trim();
+    const nachricht = f.querySelector('#f-text').value.trim();
+    if (f.querySelector('#f-fall').value) return;
+    if (!name || !nachricht) { hinweis.textContent = 'Bitte Name und Nachricht ausfüllen.'; return; }
+    if (!eingerichtet) { hinweis.textContent = 'Das Gästebuch ist noch nicht eingerichtet.'; return; }
+    if (Date.now() - (+localStorage.getItem('gbZeit') || 0) < 60000) { hinweis.textContent = 'Chill mal bevor du noch einen Eintrag abschickst.'; return; }
+    senden.disabled = true;
+    try {
+      await addDoc(collection(db, 'gaestebuch'), { name, nachricht, createdAt: serverTimestamp(), approved: false });
+      localStorage.setItem('gbZeit', Date.now());
+      f.querySelector('#formular').innerHTML = '<p>Danke für deinen Eintrag! Er erscheint wenn ich ihn abgecheckt hab</p>';
+    } catch (err) {
+      hinweis.textContent = 'Das hat leider nicht geklappt. Bitte versuche es später nochmal.';
+      senden.disabled = false;
+    }
+  });
+}
+document.getElementById('neu').addEventListener('click', oeffneFenster);
+document.getElementById('neu-handy').addEventListener('click', oeffneFenster);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && fenster) fenster.querySelector('.fenster-zu').click(); });
+
+laden();
+</script>
+</body>
+</html>

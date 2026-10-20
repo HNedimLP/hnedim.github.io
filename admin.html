@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Gästebuch prüfen</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:700px;margin:auto;padding:14px}
+h1{color:rgb(143,69,8)}
+input{padding:8px;margin:4px 0;width:100%;box-sizing:border-box;border:2px solid rgb(196,98,16);border-radius:6px}
+button{padding:7px 12px;border:0;border-radius:6px;background:rgb(196,98,16);color:#fff;font-weight:bold;cursor:pointer}
+button:hover{background:rgb(143,69,8)}
+button.rot{background:#b3261e}
+.eintrag{border:2px solid rgb(196,98,16);border-radius:8px;padding:10px;margin:10px 0;background:#fff1e3}
+.eintrag.offen{background:#fff;border-style:dashed}
+.meta{font-size:.85em;color:#666}
+p.text{white-space:pre-wrap;overflow-wrap:anywhere}
+#fehler{color:#b3261e}
+</style>
+</head>
+<body>
+<h1>Gästebuch prüfen</h1>
+
+<div id="login">
+  <input type="email" id="mail" placeholder="E-Mail" autocomplete="username">
+  <input type="password" id="pw" placeholder="Passwort" autocomplete="current-password">
+  <button id="anmelden" type="button">Anmelden</button>
+</div>
+<p id="fehler"></p>
+
+<div id="bereich" hidden>
+  <button id="abmelden" type="button">Abmelden</button>
+  <h2>Wartet auf Freigabe</h2>
+  <div id="offen"></div>
+  <h2>Veröffentlicht</h2>
+  <div id="frei"></div>
+</div>
+
+<script type="module">
+import { firebaseConfig } from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { getFirestore, collection, getDocs, query, orderBy, updateDoc, deleteDoc, doc }
+  from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app), db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const fehler = $('fehler');
+
+$('anmelden').addEventListener('click', async () => {
+  fehler.textContent = '';
+  try { await signInWithEmailAndPassword(auth, $('mail').value, $('pw').value); }
+  catch (e) { fehler.textContent = 'Anmeldung fehlgeschlagen.'; }
+});
+$('abmelden').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, user => {
+  $('login').hidden = !!user;
+  $('bereich').hidden = !user;
+  if (user) laden();
+});
+
+function karte(d, offen) {
+  const e = d.data();
+  const div = document.createElement('div');
+  div.className = 'eintrag' + (offen ? ' offen' : '');
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  meta.textContent = e.name + ' – ' + (e.createdAt ? e.createdAt.toDate().toLocaleString('de-DE') : '');
+  const text = document.createElement('p');
+  text.className = 'text';
+  text.textContent = e.nachricht;
+  div.append(meta, text);
+
+  const knopf = (beschriftung, klasse, aktion) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = beschriftung; b.className = klasse;
+    b.style.marginRight = '8px';
+    b.addEventListener('click', async () => { await aktion(); laden(); });
+    div.appendChild(b);
+  };
+  const ref = doc(db, 'gaestebuch', d.id);
+  if (offen) knopf('Freigeben', '', () => updateDoc(ref, { approved: true }));
+  else knopf('Zurückziehen', '', () => updateDoc(ref, { approved: false }));
+  knopf('Löschen', 'rot', () => { if (confirm('Wirklich löschen?')) return deleteDoc(ref); });
+  return div;
+}
+
+async function laden() {
+  fehler.textContent = '';
+  try {
+    const snap = await getDocs(query(collection(db, 'gaestebuch'), orderBy('createdAt', 'desc')));
+    $('offen').replaceChildren(); $('frei').replaceChildren();
+    snap.forEach(d => {
+      const frei = d.data().approved === true;
+      $(frei ? 'frei' : 'offen').appendChild(karte(d, !frei));
+    });
+    if (!$('offen').children.length) $('offen').textContent = 'Nichts zu prüfen.';
+  } catch (e) {
+    fehler.textContent = 'Keine Berechtigung. Stimmt die Admin-UID in den Regeln?';
+  }
+}
+</script>
+</body>
+</html>
