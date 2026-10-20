@@ -35,6 +35,8 @@ p.text{white-space:pre-wrap;overflow-wrap:anywhere}
   <div id="offen"></div>
   <h2>Veröffentlicht</h2>
   <div id="frei"></div>
+  <h2>Rangliste (Fischen)</h2>
+  <div id="rang"></div>
 </div>
 
 <script type="module">
@@ -53,14 +55,17 @@ const fehler = $('fehler');
 $('anmelden').addEventListener('click', async () => {
   fehler.textContent = '';
   try { await signInWithEmailAndPassword(auth, $('mail').value, $('pw').value); }
-  catch (e) { fehler.textContent = 'Anmeldung fehlgeschlagen.'; }
+  catch (e) { fehler.textContent = 'Anmeldung fehlgeschlagen (' + (e.code || e.message) + ').'; }
 });
 $('abmelden').addEventListener('click', () => signOut(auth));
 
+const ADMIN_UID = 'AY1FxscQqDOt2dcLB6Lii3CrYdX2';   // muss zu firestore.rules passen
 onAuthStateChanged(auth, user => {
-  $('login').hidden = !!user;
-  $('bereich').hidden = !user;
-  if (user) laden();
+  const istAdmin = !!user && user.uid === ADMIN_UID;
+  $('login').hidden = istAdmin;
+  $('bereich').hidden = !istAdmin;
+  if (istAdmin) laden();
+  else if (user) fehler.textContent = 'Du bist gerade mit einem anderen Konto angemeldet (z. B. als Fischen-Spieler). Melde dich hier mit deiner Admin-Mail an.';
 });
 
 function karte(d, offen) {
@@ -89,8 +94,34 @@ function karte(d, offen) {
   return div;
 }
 
+async function rangLaden() {
+  const box = $('rang');
+  try {
+    const snap = await getDocs(query(collection(db, 'rangliste'), orderBy('fische', 'desc')));
+    box.replaceChildren();
+    snap.forEach(d => {
+      const e = d.data();
+      const div = document.createElement('div');
+      div.className = 'eintrag';
+      const t = document.createElement('span');
+      t.textContent = e.name + ' – ' + e.fische + ' Fische ';
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'rot'; b.textContent = 'Löschen';
+      b.addEventListener('click', async () => {
+        if (!confirm(e.name + ' wirklich löschen?')) return;
+        try { await deleteDoc(doc(db, 'spielstand', d.id)); } catch (x) {}
+        await deleteDoc(doc(db, 'rangliste', d.id));
+        rangLaden();
+      });
+      div.append(t, b); box.appendChild(div);
+    });
+    if (!box.children.length) box.textContent = 'Noch niemand eingetragen.';
+  } catch (e) { box.textContent = 'Rangliste: ' + (e.code || e.message); }
+}
+
 async function laden() {
   fehler.textContent = '';
+  rangLaden();
   try {
     const snap = await getDocs(query(collection(db, 'gaestebuch'), orderBy('createdAt', 'desc')));
     $('offen').replaceChildren(); $('frei').replaceChildren();
@@ -100,7 +131,7 @@ async function laden() {
     });
     if (!$('offen').children.length) $('offen').textContent = 'Nichts zu prüfen.';
   } catch (e) {
-    fehler.textContent = 'Keine Berechtigung. Stimmt die Admin-UID in den Regeln?';
+    fehler.textContent = 'Fehler: ' + (e.code || e.message) + ' – bei permission-denied: Stimmt die Admin-UID in den Regeln und sind die Regeln veröffentlicht?';
   }
 }
 </script>

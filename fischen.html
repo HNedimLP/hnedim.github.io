@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fischen | Nedim Humackic</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+@font-face{
+  font-family:"Thunderman";
+  src:url("Thunderman.ttf") format("truetype");
+  font-display:swap;
+}
+@font-face{
+  font-family:"Determination";
+  src:url("determination.ttf") format("truetype");
+  font-display:swap;
+}
+
+/* Diese Werte setzt das Skript oben im Code (EINSTELLUNGEN) – hier nur Startwerte */
+:root{
+  --s:2;                 /* Pixelart-Skalierung: 2 = alles doppelt so groß */
+  --leiste-x:0px;
+  --leiste-y:0px;
+  --leiste-b:300px;
+  --leiste-h:28px;
+  --zaehler-y:70px;
+  --feuer-x:44;
+  --feuer-y:64;
+  --feuer-b:40;
+  --fx:0px;               /* Fischer verschieben (setzt fischerBewegen) */
+  --fy:0px;
+  --knopf-y:76px;
+  --is:2;                /* Inventar-Skalierung */
+  --slot:calc(22px * var(--is));
+  --pfeil:40px;
+  --ofen-x:0px;
+  --ofen-y:0px;
+}
+
+html,body{margin:0;background:#fff}
+body{
+  font-family:"Thunderman",Arial,sans-serif;
+  overflow-x:hidden;
+  position:relative;
+}
+button{font-family:inherit}
+
+.zurueck{
+  position:absolute;
+  top:10px;
+  left:10px;
+  z-index:60;
+  display:inline-block;
+  padding:6px 12px;
+  background:rgb(57, 82, 241);
+  color:#fff;
+  text-decoration:none;
+  border-radius:8px;
+  font-weight:bold;
+  font-size:1.2em;
+}
+.zurueck:hover{background:rgb(35, 55, 200)}
+
+/* ===== Bühne: hier liegt die Spielwelt, Kachel 1 ist immer in der Mitte ===== */
+#buehne{
+  min-height:75vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+}
+body.im-spiel{touch-action:none}
+
+#welt{
+  position:relative;
+  width:calc(128px * var(--s));
+  height:calc(128px * var(--s));
+}
+.kachel{
+  position:absolute;
+  top:0;
+  width:calc(128px * var(--s));
+  height:calc(128px * var(--s));
+}
+#kachel1{left:0}
+#kachel2{left:100%}   /* direkt rechts neben Kachel 1 */
+.kachel img{
+  display:block;
+  image-rendering:pixelated;
+  max-width:none;
+  -webkit-user-drag:none;
+}
+.kachel .bg{width:100%;height:100%}
+
+/* ----- Fischer ----- */
+/* Das GIF ist 256x128 = doppelt so breit wie die Kachel, deshalb ragt es links und rechts heraus.
+   Man kann es nicht anklicken (pointer-events:none), geangelt wird mit dem Knopf. */
+#fischer{
+  position:absolute;
+  left:-100%;
+  top:0;
+  width:200%;
+  height:100%;
+  z-index:5;
+  image-rendering:pixelated;
+  pointer-events:none;
+  transform:translate(calc(var(--fx) + var(--wx, 0px)), var(--fy));
+}
+
+/* ----- Kachel 2: vorher unsichtbar, Text "Freischalten" ----- */
+#bg2{opacity:0;transition:opacity .8s}
+#kachel2.frei #bg2{opacity:1}
+
+#freischalten{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:90%;
+  text-align:center;
+  font-family:"Determination","Courier New",monospace;
+  font-size:calc(11px * var(--s));
+  line-height:1.2;
+  color:#111;
+  cursor:pointer;
+  transition:transform .15s, opacity .5s;
+}
+#freischalten:hover{transform:translate(-50%,-50%) scale(1.2)}   /* wird beim Drüberfahren größer */
+#freischalten.rot{color:#c0261c}
+#kachel2.frei #freischalten{opacity:0;pointer-events:none}
+
+/* ----- Lagerfeuer (erst nach dem Freischalten sichtbar) ----- */
+#feuer.ziel{filter:brightness(1.35)}
+#feuer{
+  position:absolute;
+  left:calc(var(--feuer-x) * var(--s) * 1.06px);
+  top:calc(var(--feuer-y) * var(--s) * 1.03px);
+  width:calc(var(--feuer-b) * var(--s) * 1.4px);
+  cursor:pointer;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .8s;
+}
+#kachel2.frei #feuer{opacity:1;pointer-events:auto}
+
+/* ----- Leiste, Meldung und Fisch-Counter (unter dem Fischer) ----- */
+#leistenslot{
+  position:absolute;
+  left:50%;
+  top:calc(100% + 12px);
+  width:var(--leiste-b);
+  transform:translate(calc(-50% + var(--leiste-x)), var(--leiste-y));
+  pointer-events:none;
+}
+#leiste{display:none}
+#leiste.aktiv{display:block}
+#balken{
+  position:relative;
+  height:var(--leiste-h);
+  background:#f1f1f1;
+  border:3px solid #222;
+  border-radius:6px;
+  overflow:hidden;
+}
+#zone{
+  position:absolute;
+  top:0;
+  bottom:0;
+  background:rgba(60, 170, 80, .55);
+  border-left:2px solid #2d8a3e;
+  border-right:2px solid #2d8a3e;
+  box-sizing:border-box;
+}
+#fischmarke{
+  position:absolute;
+  top:50%;
+  transform:translate(-50%,-50%);
+  height:calc(var(--leiste-h) * .8);
+  width:auto;
+  image-rendering:pixelated;
+}
+#fortschritt{
+  height:8px;
+  margin-top:4px;
+  border:2px solid #222;
+  border-radius:4px;
+  background:#f1f1f1;
+  overflow:hidden;
+}
+#fuellung{height:100%;width:0;background:rgb(40, 140, 70)}
+
+#meldung{
+  display:none;
+  text-align:center;
+  font-family:"Determination","Courier New",monospace;
+  font-size:1.5em;
+  white-space:nowrap;
+}
+#meldung.an{display:block}
+#meldung.gut{color:rgb(26, 110, 50)}
+#meldung.schlecht{color:#c0261c}
+
+#steuer{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:var(--knopf-y)}
+#fischen-knopf{
+  padding:6px 26px;
+  border:0;
+  border-radius:8px;
+  background:rgb(40, 140, 70);
+  color:#fff;
+  font-family:"Thunderman",Arial,sans-serif;
+  font-size:1.5em;
+  cursor:pointer;
+}
+#fischen-knopf:hover{background:rgb(26, 100, 48)}
+#fischen-knopf:disabled{opacity:.55;cursor:default;background:rgb(40, 140, 70)}
+
+#zaehler{
+  font-family:"Determination","Courier New",monospace;
+  font-size:1.7em;
+  color:#111;
+  white-space:nowrap;
+}
+
+/* ===== Inventar (5x5 aus box.png) und Ofen ===== */
+#inv-box{
+  margin:14px auto 0;
+  width:fit-content;
+  text-align:center;
+  font-family:"Determination","Courier New",monospace;
+  font-size:1.3em;
+}
+#inv{display:grid;grid-template-columns:repeat(5, var(--slot))}
+.slot{
+  position:relative;
+  width:var(--slot);
+  height:var(--slot);
+  background:url("box.png") center/100% 100% no-repeat;
+  image-rendering:pixelated;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:calc(var(--slot) * .6);
+  touch-action:none;
+  -webkit-user-select:none;
+  user-select:none;
+}
+.item{width:80%;height:80%;object-fit:contain;image-rendering:pixelated;pointer-events:none;-webkit-user-drag:none}
+.item.g{filter:sepia(1) saturate(3) hue-rotate(-20deg) brightness(.75)}   /* gebratener Fisch = dunkler Platzhalter */
+.slot.zieht .item{opacity:.3}
+.badge{
+  position:absolute;right:3px;bottom:0;
+  font-family:"Determination","Courier New",monospace;
+  font-size:.5em;color:#111;
+}
+.ghost{
+  position:fixed;z-index:300;pointer-events:none;
+  width:calc(var(--slot) * .8);height:calc(var(--slot) * .8);object-fit:contain;image-rendering:pixelated;
+  transform:translate(-50%,-50%);
+}
+.ghost.g{filter:sepia(1) saturate(3) hue-rotate(-20deg) brightness(.75)}
+
+#ofen{
+  display:none;
+  position:absolute;
+  left:50%;
+  top:calc(100% + 14px);
+  transform:translate(calc(-50% + var(--ofen-x)), var(--ofen-y));
+  align-items:center;
+  gap:10px;
+}
+#ofen.an{display:flex}
+#ofen .slot{cursor:pointer}
+#pfeil{position:relative;width:var(--pfeil);height:var(--pfeil);flex:none}
+#pfeil img{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;-webkit-user-drag:none}
+#pfeil-leer{opacity:.3;filter:grayscale(1)}
+#pfeil-fuell{clip-path:inset(0 100% 0 0)}
+
+/* ===== Rangliste (Stil wie die News-Box) ===== */
+.news{
+  margin:24px 10px;
+  position:relative;
+  border:3px solid rgb(57, 82, 241);
+  border-radius:8px;
+  background:#eef1ff;
+  overflow:hidden;
+  font-family:"Determination","Courier New",monospace;
+}
+.news h2{
+  margin:0 0 10px;
+  padding:12px;
+  text-align:center;
+  background:rgb(57, 82, 241);
+  color:#fff;
+  font-family:"Thunderman",Arial,sans-serif;
+  font-size:1.6em;
+}
+@media (min-width:1500px){
+  .news{
+    position:fixed;
+    top:50%;
+    right:10px;
+    transform:translateY(-50%);
+    width:320px;
+    margin:0;
+    z-index:50;
+  }
+  #buehne{min-height:100vh}
+}
+.rang-zeile{
+  display:flex;
+  gap:8px;
+  padding:6px 12px;
+  margin:8px 0;
+  font-size:1.15em;
+}
+.rang-zeile:nth-child(3n+1){background:#ffd9b8}
+.rang-zeile:nth-child(3n+2){background:#dfe4ff}
+.rang-zeile:nth-child(3n+3){background:#fff0b8}
+.rang-platz{flex:none;width:2.4em}
+.rang-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rang-fische{flex:none;font-weight:bold}
+.rang-zeile.ich{outline:2px solid rgb(57, 82, 241);outline-offset:-2px;font-weight:bold}
+.rang-punkte{text-align:center;margin:0;padding:0;font-size:1.15em;line-height:.8}
+.rang-leer{padding:8px 12px;margin:0;font-size:1.1em}
+.rang-fuss{
+  padding:8px 12px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  align-items:stretch;
+  text-align:center;
+  font-size:1.05em;
+}
+.rang-knopf{
+  padding:8px 12px;
+  background:rgb(57, 82, 241);
+  color:#fff;
+  border:0;
+  border-radius:8px;
+  font-family:"Thunderman",Arial,sans-serif;
+  font-size:1.15em;
+  cursor:pointer;
+}
+.rang-knopf:hover{background:rgb(35, 55, 200)}
+.rang-link{
+  background:none;
+  border:0;
+  padding:2px;
+  color:#1a2fb5;
+  font-family:inherit;
+  font-size:1em;
+  text-decoration:underline;
+  cursor:pointer;
+}
+.rang-link:hover{color:darkorange}
+
+/* ===== Eintragen / Anmelden ===== */
+dialog{
+  padding:0;
+  border:3px solid rgb(57, 82, 241);
+  border-radius:10px;
+  width:min(380px, 92vw);
+  overflow:hidden;
+  color:#111;
+}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+.dlg-kopf{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 10px;
+  background:rgb(57, 82, 241);
+  color:#fff;
+  font-family:"Determination","Courier New",monospace;
+  font-size:1.25em;
+}
+.dlg-zu{
+  width:30px;height:30px;border:0;border-radius:6px;
+  background:#fff;color:rgb(57, 82, 241);font-weight:bold;cursor:pointer;
+}
+.dlg-zu:hover{background:darkorange;color:#fff}
+.dlg-inhalt{padding:14px;font-family:Arial,sans-serif;line-height:1.4}
+.dlg-tabs{display:flex;gap:8px;margin-bottom:12px}
+.dlg-tab{
+  flex:1;padding:8px;border:2px solid rgb(57, 82, 241);border-radius:8px;
+  background:#fff;color:rgb(57, 82, 241);font-weight:bold;cursor:pointer;
+}
+.dlg-tab.aktiv{background:rgb(57, 82, 241);color:#fff}
+.dlg-inhalt label{display:block;margin:10px 0 4px;font-weight:bold}
+.dlg-inhalt input{
+  width:100%;box-sizing:border-box;padding:8px;font-size:1em;
+  border:2px solid #aab4f5;border-radius:6px;
+}
+.dlg-hinweis{font-size:.85em;color:#555;margin:10px 0 0}
+.dlg-fehler{min-height:1.2em;margin:10px 0 0;color:#c0261c;font-weight:bold}
+.dlg-senden{
+  width:100%;margin-top:10px;padding:10px;border:0;border-radius:8px;
+  background:rgb(40, 140, 70);color:#fff;font-size:1.1em;font-weight:bold;cursor:pointer;
+}
+.dlg-senden:hover{background:rgb(26, 100, 48)}
+.dlg-senden:disabled{opacity:.6;cursor:wait}
+
+/* ===== Handy: kleinere Fische-Anzeige ===== */
+@media (max-width:600px){
+  #zaehler{font-size:1.4em}
+  #meldung{font-size:1.2em}
+}
+</style>
+</head>
+<body>
+
+<a class="zurueck" href="index.html">← Zurück</a>
+
+<main id="buehne">
+  <div id="welt">
+
+    <!-- Kachel 1: Fischer -->
+    <div class="kachel" id="kachel1">
+      <img class="bg" src="fischbg1.png" alt="" draggable="false">
+      <canvas id="fischer" width="256" height="128" aria-label="Fischer"></canvas>
+    </div>
+
+    <!-- Kachel 2: wird mit Fischen freigeschaltet -->
+    <div class="kachel" id="kachel2">
+      <img class="bg" id="bg2" src="fischbg2.png" alt="" draggable="false">
+      <img id="feuer" src="lagerfeuer.gif" alt="Lagerfeuer" title="Klick mich" draggable="false">
+      <div id="freischalten" role="button" tabindex="0"></div>
+
+      <!-- Ofen: erscheint unter dem Lagerfeuer, sobald ein Fisch draufgezogen wurde -->
+      <div id="ofen">
+        <div class="slot" id="ofen-in" title="Zurück ins Inventar"></div>
+        <div id="pfeil">
+          <img id="pfeil-leer" src="rpfeil.png" alt="" draggable="false">
+          <img id="pfeil-fuell" src="rpfeil.png" alt="" draggable="false">
+        </div>
+        <div class="slot" id="ofen-out" title="Einsammeln"></div>
+      </div>
+    </div>
+
+    <!-- Unter dem Fischer: Leiste (nur im Minispiel), Meldung, Fisch-Counter -->
+    <div id="leistenslot">
+      <div id="leiste">
+        <div id="balken">
+          <div id="zone"></div>
+          <img id="fischmarke" src="fisch.png" alt="" draggable="false">
+        </div>
+        <div id="fortschritt"><div id="fuellung"></div></div>
+      </div>
+      <div id="meldung"></div>
+    </div>
+  </div>
+  <div id="steuer">
+    <button type="button" id="fischen-knopf" disabled>Fischen</button>
+    <div id="zaehler" title="Gold" aria-live="polite"><span id="z-muenzen"></span></div>
+  </div>
+  <div id="inv-box">
+    <div>Inventar</div>
+    <div id="inv"></div>
+  </div>
+</main>
+
+<aside class="news" id="rangliste" aria-label="Rangliste">
+  <h2>Rangliste</h2>
+  <div id="rang-liste"><p class="rang-leer">Lade…</p></div>
+  <div class="rang-fuss" id="rang-fuss"></div>
+</aside>
+
+<dialog id="dlg">
+  <div class="dlg-kopf">
+    <span id="dlg-titel">Rangliste</span>
+    <button type="button" class="dlg-zu" id="dlg-zu" aria-label="Schließen">✕</button>
+  </div>
+  <div class="dlg-inhalt">
+    <div class="dlg-tabs">
+      <button type="button" class="dlg-tab aktiv" id="tab-neu">Eintragen</button>
+      <button type="button" class="dlg-tab" id="tab-login">Anmelden</button>
+    </div>
+    <form id="dlg-form" autocomplete="on">
+      <label for="dlg-name">Name</label>
+      <input id="dlg-name" type="text" maxlength="16" autocomplete="username" required>
+      <label for="dlg-pw">Passwort</label>
+      <input id="dlg-pw" type="password" minlength="6" autocomplete="new-password" required>
+      <p class="dlg-hinweis" id="dlg-hinweis"></p>
+      <p class="dlg-fehler" id="dlg-fehler" role="alert"></p>
+      <button type="submit" class="dlg-senden" id="dlg-senden">Eintragen</button>
+    </form>
+  </div>
+</dialog>
+
+<script type="module">
+// =====================================================================
+//  EINSTELLUNGEN – hier drehst du an allem. Alles andere musst du nicht anfassen.
+// =====================================================================
+const EINSTELLUNGEN = {
+
+  // ---------- Ablauf ----------
+  WARTEZEIT_MIN: 2,          // Sekunden: so früh startet das Minispiel frühestens
+  WARTEZEIT_MAX: 15,         // Sekunden: so spät startet es spätestens
+  KOSTEN_KACHEL_2: 2,        // so viele Fische kostet fischbg2
+  KAUF_ZIEHT_FISCHE_AB: true,// true = die 2 Fische sind weg (gekauft), false = nur Mindestzahl nötig
+                             // Die Rangliste zählt immer ALLE gefangenen Fische, auch ausgegebene.
+
+  // ---------- Fischer-GIF, Knopf, Inventar, Ofen ----------
+  FISCHER_TEMPO: 1,          // Geschwindigkeit des GIFs: 1 = normal, 2 = doppelt so schnell, 0.5 = halb so schnell
+                             // (zur Laufzeit änderbar mit fischerTempo(2))
+  FISCHER_X: 0,              // Fischer verschieben in Pixeln: + nach rechts, - nach links
+  FISCHER_Y: 0,              // + nach unten, - nach oben   (zur Laufzeit: fischerBewegen(x, y))
+  KNOPF_Y: 76,               // Abstand des Fischen-Knopfs unter der Kachel (Pixel)
+  INV_SKALA: 2,              // Größe des Inventars (box.png ist 22x22, also 2 = 44px pro Feld)
+  BILD_FISCH: 'fisch.png',   // Sprite für Fische (gebraten = dasselbe Bild, nur dunkel eingefärbt)
+  BRATZEIT: 6,               // Sekunden, die ein Fisch am Lagerfeuer braucht
+  OFEN_X: 0,                 // Ofen-Fenster verschieben (Pixel). Standard: mittig unter der Kachel 2
+  OFEN_Y: 0,
+  OFEN_PFEIL: 40,            // Größe von rpfeil.png (Pixel)
+
+  // ---------- Wackeln des Fischers im Minispiel ----------
+  WACKEL_STAERKE: 6,         // Pixel nach links/rechts. 0 = kein Wackeln, 3 = leicht, 6 = hektisch, 12 = wild
+  WACKEL_TEMPO: 1,           // 1 = normal, 2 = doppelt so schnell, 0.5 = halb so schnell
+
+  // ---------- Leiste (Position und Größe) ----------
+  // Standard: mittig direkt unter dem Fischer.
+  LEISTE_X: 0,               // Pixel: + nach rechts, - nach links
+  LEISTE_Y: 0,               // Pixel: + nach unten, - nach oben
+  LEISTE_BREITE: 300,        // Pixel
+  LEISTE_HOEHE: 28,          // Pixel (der Fortschrittsstreifen darunter kommt dazu)
+  ZAEHLER_Y: 130,             // Abstand des Fisch-Counters unter der Kachel (Pixel). Bei größerer Leiste erhöhen.
+
+  // ---------- Schwierigkeit des Minispiels ----------
+  ZONE_BREITE: 0.26,         // Größe der grünen Fangzone (0.26 = 26 % der Leiste). Größer = leichter.
+  ZONE_BESCHLEUNIGUNG: 2.6,  // Wie stark die Zone beim Halten nach rechts bzw. beim Loslassen nach links zieht
+  ZONE_REIBUNG: 0.965,       // Näher an 1 = rutscht mehr nach, kleiner = bremst schneller
+  FISCH_TEMPO: 0.6,          // Wie schnell der Fisch durch die Leiste flitzt. Größer = schwerer.
+  FUELL_TEMPO: 0.4,          // Fortschritt pro Sekunde, wenn der Fisch in der Zone ist
+  LEER_TEMPO: 0.25,          // Fortschritt-Verlust pro Sekunde, wenn er draußen ist
+  START_FORTSCHRITT: 0.3,    // Startwert des Fortschritts (0 bis 1)
+  MAX_DAUER: 30,             // Sekunden, dann entkommt der Fisch sicher
+
+  // ---------- Lagerfeuer auf Kachel 2 ----------
+  // Angaben in Pixelart-Pixeln der 128er-Kachel (werden automatisch mit der Skalierung malgenommen).
+  FEUER_X: 44,               // Abstand von links in der Kachel
+  FEUER_Y: 64,               // Abstand von oben in der Kachel
+  FEUER_BREITE: 40,          // Breite des Lagerfeuers
+
+  // ---------- Skalierung ----------
+  SKALA_GROSS: 2,            // Pixelart-Skalierung auf Computer
+  SKALA_KLEIN: 1,            // Pixelart-Skalierung auf kleinen Bildschirmen (sonst passt Kachel 2 nicht aufs Handy)
+  UMSCHALT_BREITE: 800,      // darunter gilt SKALA_KLEIN
+
+  // ---------- Rangliste ----------
+  START_MAX: 200             // So viele Fische werden beim Eintragen sofort übernommen. MUSS zu firestore.rules passen!
+                             // Der Rest wird danach automatisch nachgetragen.
+};
+const E = EINSTELLUNGEN;
+
+// ---------------------------------------------------------------------
+//  CSS-Werte setzen
+// ---------------------------------------------------------------------
+const rootStil = document.documentElement.style;
+rootStil.setProperty('--leiste-x', E.LEISTE_X + 'px');
+rootStil.setProperty('--leiste-y', E.LEISTE_Y + 'px');
+rootStil.setProperty('--leiste-b', E.LEISTE_BREITE + 'px');
+rootStil.setProperty('--leiste-h', E.LEISTE_HOEHE + 'px');
+rootStil.setProperty('--zaehler-y', E.ZAEHLER_Y + 'px');
+rootStil.setProperty('--feuer-x', E.FEUER_X);
+rootStil.setProperty('--feuer-y', E.FEUER_Y);
+rootStil.setProperty('--feuer-b', E.FEUER_BREITE);
+rootStil.setProperty('--knopf-y', E.KNOPF_Y + 'px');
+rootStil.setProperty('--is', E.INV_SKALA);
+rootStil.setProperty('--pfeil', E.OFEN_PFEIL + 'px');
+rootStil.setProperty('--ofen-x', E.OFEN_X + 'px');
+rootStil.setProperty('--ofen-y', E.OFEN_Y + 'px');
+
+function skalaSetzen() {
+  rootStil.setProperty('--s', window.innerWidth >= E.UMSCHALT_BREITE ? E.SKALA_GROSS : E.SKALA_KLEIN);
+}
+skalaSetzen();
+window.addEventListener('resize', skalaSetzen);
+
+// ---------------------------------------------------------------------
+//  Elemente und Spielstand
+// ---------------------------------------------------------------------
+const $ = function (id) { return document.getElementById(id); };
+const fischerEl = $('fischer');
+const kachel2 = $('kachel2');
+const freiEl = $('freischalten');
+const zMuenzenEl = $('z-muenzen');
+const leisteEl = $('leiste');
+const zoneEl = $('zone');
+const markeEl = $('fischmarke');
+const fuellungEl = $('fuellung');
+const meldungEl = $('meldung');
+const feuerEl = $('feuer');
+const knopfEl = $('fischen-knopf');
+const invEl = $('inv');
+const ofenEl = $('ofen');
+const ofenIn = $('ofen-in');
+const ofenOut = $('ofen-out');
+const pfeilFuell = $('pfeil-fuell');
+
+// ---------------------------------------------------------------------
+//  Spielstand
+//  inv        = 25 Felder: '' (leer), 'f' (Fisch), 'g' (gebratener Fisch)
+//  muenzen    = Münzen (Verdienen kommt mit dem Shop auf Kachel 3)
+//  gesamt     = alle je gefangenen Fische (zählt für die Rangliste)
+//  kachel2    = freigeschaltet?
+//  ofenRoh / ofenFertig = Fische im Ofen (roh / fertig zum Einsammeln)
+//  Ohne Anmeldung liegt der Stand im Browser (localStorage). Mit Anmeldung wird er in
+//  Firebase (Sammlung "spielstand") gespeichert. Beim Abmelden geht alles auf Level 0.
+// ---------------------------------------------------------------------
+const SPEICHER = 'fischen_stand_v2';
+const SLOTS = 25;
+function leerStand() {
+  return { inv: new Array(SLOTS).fill(''), muenzen: 0, gesamt: 0, kachel2: false, ofenRoh: 0, ofenFertig: 0 };
+}
+function zahl(v, max) { return Math.min(max, Math.max(0, parseInt(v, 10) || 0)); }
+function standNormalisieren(o) {
+  const s = leerStand();
+  if (!o) return s;
+  if (Array.isArray(o.inv)) for (let i = 0; i < SLOTS; i++) s.inv[i] = (o.inv[i] === 'f' || o.inv[i] === 'g') ? o.inv[i] : '';
+  s.muenzen = zahl(o.muenzen, 1000000);
+  s.gesamt = zahl(o.gesamt, 1000000);
+  s.kachel2 = !!o.kachel2;
+  s.ofenRoh = zahl(o.ofenRoh, SLOTS);
+  s.ofenFertig = zahl(o.ofenFertig, SLOTS);
+  return s;
+}
+let stand = leerStand();   // Seite neu laden = Level 0. Gespeichert wird nur mit Konto (Firebase).
+try { localStorage.removeItem('fischen_stand_v1'); localStorage.removeItem('fischen_stand_v2'); } catch (e) {}   // alte lokale Stände aufräumen
+function lokalSpeichern() {}
+function speichern() { lokalSpeichern(); cloudPlanen(); }
+
+function anzahl(typ) { return stand.inv.filter(function (x) { return x === typ; }).length; }
+function freierSlot() { return stand.inv.indexOf(''); }
+function fischText(n) { return n + (n === 1 ? ' Fisch' : ' Fische'); }
+
+// ---------------------------------------------------------------------
+//  Anzeige: Counter, Inventar, Ofen
+// ---------------------------------------------------------------------
+const slotEls = [];
+for (let i = 0; i < SLOTS; i++) {
+  const d = document.createElement('div');
+  d.className = 'slot';
+  d.dataset.i = i;
+  invEl.appendChild(d);
+  slotEls.push(d);
+}
+
+function itemEl(typ) {
+  const sp = document.createElement('img');
+  sp.className = 'item' + (typ === 'g' ? ' g' : '');
+  sp.src = E.BILD_FISCH;
+  sp.draggable = false;
+  return sp;
+}
+function slotFuellen(el, typ, n) {
+  el.textContent = '';
+  if (n <= 0) return;
+  el.appendChild(itemEl(typ));
+  if (n > 1) {
+    const b = document.createElement('span');
+    b.className = 'badge';
+    b.textContent = n;
+    el.appendChild(b);
+  }
+}
+
+function anzeigen() {
+  zMuenzenEl.textContent = 'G: ' + stand.muenzen;
+  kachel2.classList.toggle('frei', stand.kachel2);
+  for (let i = 0; i < SLOTS; i++) {
+    if (drag && drag.i === i) continue;
+    slotFuellen(slotEls[i], stand.inv[i], stand.inv[i] ? 1 : 0);
+  }
+  slotFuellen(ofenIn, 'f', stand.ofenRoh);
+  slotFuellen(ofenOut, 'g', stand.ofenFertig);
+  ofenEl.classList.toggle('an', stand.kachel2 && (stand.ofenRoh > 0 || stand.ofenFertig > 0));
+}
+freiEl.textContent = 'Freischalten: ' + fischText(E.KOSTEN_KACHEL_2);
+
+function zuruecksetzen() {   // zurück auf Level 0 (beim Abmelden)
+  clearTimeout(cloudTimer);
+  stand = leerStand();
+  ofenFortschritt = 0;
+  ofenPfeil();
+  try { localStorage.removeItem(SPEICHER); } catch (e) {}
+  feuerSound.pause();
+  anzeigen();
+}
+
+// ---------------------------------------------------------------------
+//  Kachel 2 kaufen (mit Fischen aus dem Inventar)
+// ---------------------------------------------------------------------
+function kaufen() {
+  if (stand.kachel2) return;
+  if (anzahl('f') < E.KOSTEN_KACHEL_2) {
+    freiEl.textContent = 'Zu wenig Fische!';
+    freiEl.classList.add('rot');
+    setTimeout(function () {
+      freiEl.textContent = 'Freischalten: ' + fischText(E.KOSTEN_KACHEL_2);
+      freiEl.classList.remove('rot');
+    }, 1200);
+    return;
+  }
+  if (E.KAUF_ZIEHT_FISCHE_AB) {
+    let n = E.KOSTEN_KACHEL_2;
+    for (let i = 0; i < SLOTS && n > 0; i++) if (stand.inv[i] === 'f') { stand.inv[i] = ''; n--; }
+  }
+  stand.kachel2 = true;
+  speichern();
+  anzeigen();
+}
+freiEl.addEventListener('click', kaufen);
+freiEl.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); kaufen(); }
+});
+
+// ---------------------------------------------------------------------
+//  Lagerfeuer (genau wie auf der Startseite: Klick startet/stoppt den Sound)
+// ---------------------------------------------------------------------
+const feuerSound = new Audio('lagerfeuer.mp3');
+feuerSound.loop = true;
+feuerEl.addEventListener('click', function () {
+  if (feuerSound.paused) {
+    const p = feuerSound.play();
+    if (p && p.catch) p.catch(function () {});
+  } else {
+    feuerSound.pause();
+  }
+});
+
+// ---------------------------------------------------------------------
+//  Inventar: Ziehen (Maus und Finger). Auf ein anderes Feld = tauschen,
+//  auf das Lagerfeuer = braten.
+// ---------------------------------------------------------------------
+let drag = null;
+function ueberFeuer(x, y) {
+  if (!stand.kachel2) return false;
+  const r = feuerEl.getBoundingClientRect();
+  return x > r.left - 12 && x < r.right + 12 && y > r.top - 12 && y < r.bottom + 12;
+}
+invEl.addEventListener('pointerdown', function (e) {
+  const sl = e.target.closest('.slot');
+  if (!sl) return;
+  const i = +sl.dataset.i;
+  if (!stand.inv[i]) return;
+  e.preventDefault();
+  const g = document.createElement('img');
+  g.src = E.BILD_FISCH;
+  g.className = 'ghost' + (stand.inv[i] === 'g' ? ' g' : '');
+  document.body.appendChild(g);
+  drag = { i: i, g: g, typ: stand.inv[i] };
+  sl.classList.add('zieht');
+  ziehen(e);
+});
+function ziehen(e) {
+  if (!drag) return;
+  drag.g.style.left = e.clientX + 'px';
+  drag.g.style.top = e.clientY + 'px';
+  feuerEl.classList.toggle('ziel', drag.typ === 'f' && ueberFeuer(e.clientX, e.clientY));
+}
+window.addEventListener('pointermove', ziehen);
+function ziehenEnde(e, abbruch) {
+  if (!drag) return;
+  const d = drag;
+  drag = null;
+  d.g.remove();
+  feuerEl.classList.remove('ziel');
+  slotEls[d.i].classList.remove('zieht');
+  if (!abbruch) {
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const ziel = el && el.closest ? el.closest('#inv .slot') : null;
+    if (ziel && +ziel.dataset.i !== d.i) {
+      const j = +ziel.dataset.i;
+      const t = stand.inv[j]; stand.inv[j] = stand.inv[d.i]; stand.inv[d.i] = t;
+    } else if (d.typ === 'f' && ueberFeuer(e.clientX, e.clientY) && stand.ofenRoh < SLOTS) {
+      stand.inv[d.i] = '';
+      stand.ofenRoh++;
+    }
+    speichern();
+  }
+  anzeigen();
+}
+window.addEventListener('pointerup', function (e) { ziehenEnde(e, false); });
+window.addEventListener('pointercancel', function (e) { ziehenEnde(e, true); });
+
+// ---------------------------------------------------------------------
+//  Ofen: roh links, Pfeil füllt sich, fertig rechts. Klick auf ein Feld = ins Inventar.
+// ---------------------------------------------------------------------
+let ofenFortschritt = 0;
+function ofenPfeil() {
+  pfeilFuell.style.clipPath = 'inset(0 ' + (100 - ofenFortschritt * 100) + '% 0 0)';
+}
+setInterval(function () {
+  if (stand.ofenRoh <= 0) {
+    if (ofenFortschritt) { ofenFortschritt = 0; ofenPfeil(); }
+    return;
+  }
+  ofenFortschritt += 0.1 / E.BRATZEIT;
+  if (ofenFortschritt >= 1) {
+    ofenFortschritt = 0;
+    stand.ofenRoh--;
+    stand.ofenFertig++;
+    speichern();
+    anzeigen();
+  }
+  ofenPfeil();
+}, 100);
+
+function ofenEinsammeln(feld, typ) {
+  let n = stand[feld];
+  while (n > 0 && freierSlot() >= 0) { stand.inv[freierSlot()] = typ; n--; }
+  stand[feld] = n;
+  speichern();
+  anzeigen();
+}
+ofenOut.addEventListener('click', function () { ofenEinsammeln('ofenFertig', 'g'); });
+ofenIn.addEventListener('click', function () { ofenEinsammeln('ofenRoh', 'f'); });
+
+// ---------------------------------------------------------------------
+//  Fischer-GIF: steht auf dem ersten Frame, spielt einmal pro Klick auf "Fischen".
+//  Das GIF wird selbst dekodiert, damit man das Tempo ändern kann.
+// ---------------------------------------------------------------------
+// Tempo ändern (auch zur Laufzeit in der Browser-Konsole): fischerTempo(2)
+function fischerTempo(faktor) { E.FISCHER_TEMPO = faktor; }
+// Fischer verschieben (Pixel): fischerBewegen(20, -10)
+function fischerBewegen(x, y) {
+  rootStil.setProperty('--fx', x + 'px');
+  rootStil.setProperty('--fy', y + 'px');
+}
+fischerBewegen(E.FISCHER_X, E.FISCHER_Y);
+window.fischerTempo = fischerTempo;
+window.fischerBewegen = fischerBewegen;
+
+function lzw(minC, data, npix) {
+  const clear = 1 << minC, eoi = clear + 1;
+  let size = minC + 1, mask = (1 << size) - 1, next = eoi + 1;
+  const prefix = new Uint16Array(4096), suffix = new Uint8Array(4096), stack = new Uint8Array(4097);
+  const out = new Uint8Array(npix);
+  for (let i = 0; i < clear; i++) suffix[i] = i;
+  let bi = 0, datum = 0, bits = 0, first = 0, top = 0, old = -1, op = 0, code, inCode;
+  while (op < npix) {
+    if (top === 0) {
+      if (bits < size) { datum += (data[bi++] || 0) << bits; bits += 8; continue; }
+      code = datum & mask; datum >>= size; bits -= size;
+      if (code > next || code === eoi) break;
+      if (code === clear) { size = minC + 1; mask = (1 << size) - 1; next = eoi + 1; old = -1; continue; }
+      if (old === -1) { stack[top++] = suffix[code]; old = code; first = code; continue; }
+      inCode = code;
+      if (code === next) { stack[top++] = first; code = old; }
+      while (code > clear) { stack[top++] = suffix[code]; code = prefix[code]; }
+      first = suffix[code];
+      stack[top++] = first;
+      if (next < 4096) {
+        prefix[next] = old; suffix[next] = first; next++;
+        if ((next & mask) === 0 && next < 4096) { size++; mask += next; }
+      }
+      old = inCode;
+    }
+    top--;
+    out[op++] = stack[top];
+  }
+  return out;
+}
+
+function gifLesen(buf) {
+  const d = new Uint8Array(buf);
+  let p = 6;
+  const W = d[p] | d[p + 1] << 8, H = d[p + 2] | d[p + 3] << 8, fl = d[p + 4];
+  p += 7;
+  let gct = null;
+  if (fl & 0x80) { const n = 2 << (fl & 7); gct = d.subarray(p, p + n * 3); p += n * 3; }
+  const comp = document.createElement('canvas'); comp.width = W; comp.height = H;
+  const cc = comp.getContext('2d');
+  const tmp = document.createElement('canvas');
+  const tc = tmp.getContext('2d');
+  const frames = [];
+  let gce = { delay: 100, trans: -1, disp: 0 }, prev = null;
+  while (p < d.length) {
+    const b = d[p++];
+    if (b === 0x3B) break;
+    if (b === 0x21) {
+      const lab = d[p++];
+      if (lab === 0xF9) {
+        const r = d[p + 2] | d[p + 3] << 8;
+        gce = { disp: (d[p + 1] >> 2) & 7, delay: r < 2 ? 100 : r * 10, trans: (d[p + 1] & 1) ? d[p + 4] : -1 };
+      }
+      while (d[p]) p += d[p] + 1;
+      p++;
+    } else if (b === 0x2C) {
+      const x = d[p] | d[p + 1] << 8, y = d[p + 2] | d[p + 3] << 8, w = d[p + 4] | d[p + 5] << 8, h = d[p + 6] | d[p + 7] << 8, f = d[p + 8];
+      p += 9;
+      let ct = gct;
+      if (f & 0x80) { const n = 2 << (f & 7); ct = d.subarray(p, p + n * 3); p += n * 3; }
+      const minC = d[p++];
+      const chunks = []; let len = 0;
+      while (d[p]) { chunks.push(d.subarray(p + 1, p + 1 + d[p])); len += d[p]; p += d[p] + 1; }
+      p++;
+      const data = new Uint8Array(len); let o = 0;
+      chunks.forEach(function (c) { data.set(c, o); o += c.length; });
+      const idx = lzw(minC, data, w * h);
+      let zeilen = null;
+      if (f & 0x40) {   // interlaced
+        zeilen = [];
+        [[0, 8], [4, 8], [2, 4], [1, 2]].forEach(function (a) { for (let r = a[0]; r < h; r += a[1]) zeilen.push(r); });
+      }
+      tmp.width = w; tmp.height = h;
+      const img = tc.createImageData(w, h);
+      for (let k = 0; k < h; k++) {
+        const ry = zeilen ? zeilen[k] : k;
+        for (let c = 0; c < w; c++) {
+          const v = idx[k * w + c], q = (ry * w + c) * 4;
+          if (v === gce.trans) continue;
+          img.data[q] = ct[v * 3]; img.data[q + 1] = ct[v * 3 + 1]; img.data[q + 2] = ct[v * 3 + 2]; img.data[q + 3] = 255;
+        }
+      }
+      if (prev) {
+        if (prev.disp === 2) cc.clearRect(prev.x, prev.y, prev.w, prev.h);
+        else if (prev.disp === 3 && prev.save) cc.putImageData(prev.save, 0, 0);
+      }
+      const save = gce.disp === 3 ? cc.getImageData(0, 0, W, H) : null;
+      tc.putImageData(img, 0, 0);
+      cc.drawImage(tmp, x, y);
+      frames.push({ img: cc.getImageData(0, 0, W, H), delay: gce.delay });
+      prev = { disp: gce.disp, x: x, y: y, w: w, h: h, save: save };
+      gce = { delay: 100, trans: -1, disp: 0 };
+    } else break;
+  }
+  return { w: W, h: H, frames: frames };
+}
+
+const fctx = fischerEl.getContext('2d');
+let gif = null, gifLaeuft = false;
+function frameZeigen(i) { if (gif) fctx.putImageData(gif.frames[i].img, 0, 0); }
+fetch('fischer.gif').then(function (r) { return r.arrayBuffer(); }).then(function (buf) {
+  const g = gifLesen(buf);
+  if (!g.frames.length) throw new Error('leer');
+  fischerEl.width = g.w; fischerEl.height = g.h;
+  gif = g;
+  frameZeigen(0);
+}).catch(function () {   // Notlösung: Bild einfach hinzeichnen (ohne Animation)
+  const im = new Image();
+  im.onload = function () { fctx.drawImage(im, 0, 0); };
+  im.src = 'fischer.gif';
+});
+function gifAbspielen() {
+  if (!gif || gifLaeuft) return;
+  gifLaeuft = true;
+  let i = 0;
+  (function weiter() {
+    if (i >= gif.frames.length) { frameZeigen(0); gifLaeuft = false; return; }
+    frameZeigen(i);
+    const dauer = gif.frames[i].delay / E.FISCHER_TEMPO;
+    i++;
+    setTimeout(weiter, dauer);
+  })();
+}
+
+// ---------------------------------------------------------------------
+//  Angeln: Knopf -> GIF + warten -> Minispiel -> Fisch ins Inventar
+// ---------------------------------------------------------------------
+let phase = 'bereit';        // bereit | warten | spiel | ergebnis
+let gedrueckt = false;       // Maus/Finger/Leertaste gehalten?
+let warteTimer = null;
+let meldungTimer = null;
+let authBereit = false;
+function authFertig() { authBereit = true; if (phase === 'bereit') knopfEl.disabled = false; }
+
+function zufall(a, b) { return a + Math.random() * (b - a); }
+function zeigeMeldung(text, klasse, ms) {
+  meldungEl.textContent = text;
+  meldungEl.className = 'an ' + klasse;
+  clearTimeout(meldungTimer);
+  meldungTimer = setTimeout(function () { meldungEl.className = ''; }, ms);
+}
+
+knopfEl.addEventListener('click', function () {
+  if (phase !== 'bereit') return;
+  if (freierSlot() < 0) { zeigeMeldung('Inventar voll!', 'schlecht', 1200); return; }
+  phase = 'warten';
+  knopfEl.disabled = true;
+  gifAbspielen();
+  warteTimer = setTimeout(startSpiel, zufall(E.WARTEZEIT_MIN, E.WARTEZEIT_MAX) * 1000);
+});
+
+// Eingabe: Maus/Finger gedrückt halten oder Leertaste.
+// Gedrückt = Zone zieht nach rechts, losgelassen = Zone sinkt nach links.
+window.addEventListener('pointerdown', function (e) {
+  if (phase !== 'spiel') return;
+  if (e.target.closest && e.target.closest('#rangliste, dialog, button, a, input, #inv-box')) return;
+  gedrueckt = true;
+});
+['pointerup', 'pointercancel', 'blur'].forEach(function (n) {
+  window.addEventListener(n, function () { gedrueckt = false; });
+});
+window.addEventListener('keydown', function (e) {
+  if (e.code !== 'Space' || phase !== 'spiel') return;
+  if (e.target.closest && e.target.closest('input, textarea, button')) return;
+  e.preventDefault();
+  gedrueckt = true;
+});
+window.addEventListener('keyup', function (e) {
+  if (e.code === 'Space') gedrueckt = false;
+});
+
+// Zustand des Minispiels (Positionen laufen von 0 bis 1 über die Leiste)
+let zp, zv, fp, fv, ziel, zielZeit, fischTempo, fortschritt, letzteZeit, startZeit, rafId;
+const zw = E.ZONE_BREITE;
+
+function startSpiel() {
+  phase = 'spiel';
+  gedrueckt = false;
+  zp = 0.5 - zw / 2; zv = 0;
+  fp = 0.5; fv = 0;
+  ziel = 0.5; zielZeit = 0; fischTempo = E.FISCH_TEMPO;
+  fortschritt = E.START_FORTSCHRITT;
+  meldungEl.className = '';
+  leisteEl.classList.add('aktiv');
+  zoneEl.style.width = (zw * 100) + '%';
+  document.body.classList.add('im-spiel');
+  letzteZeit = startZeit = performance.now();
+  rafId = requestAnimationFrame(schritt);
+}
+
+function schritt(jetzt) {
+  const dt = Math.min(0.05, (jetzt - letzteZeit) / 1000);
+  letzteZeit = jetzt;
+
+  // --- Zone: halten = nach rechts, loslassen = nach links, mit Schwung ---
+  zv += (gedrueckt ? E.ZONE_BESCHLEUNIGUNG : -E.ZONE_BESCHLEUNIGUNG) * dt;
+  zv *= Math.pow(E.ZONE_REIBUNG, dt * 60);
+  zp += zv * dt;
+  const maxZ = 1 - zw;
+  if (zp < 0) { zp = 0; zv = Math.abs(zv) * 0.3; }
+  if (zp > maxZ) { zp = maxZ; zv = -Math.abs(zv) * 0.3; }
+
+  // --- Fisch: flitzt zu zufälligen Zielen ---
+  zielZeit -= dt;
+  if (zielZeit <= 0 || Math.abs(ziel - fp) < 0.02) {
+    ziel = zufall(0.05, 0.95);
+    zielZeit = zufall(0.4, 1.2);
+    fischTempo = E.FISCH_TEMPO * zufall(0.6, 1.4);
+  }
+  fv += (Math.sign(ziel - fp) * fischTempo - fv) * Math.min(1, dt * 8);
+  fp = Math.min(1, Math.max(0, fp + fv * dt));
+
+  // --- Fortschritt ---
+  const drin = fp >= zp && fp <= zp + zw;
+  fortschritt += (drin ? E.FUELL_TEMPO : -E.LEER_TEMPO) * dt;
+
+  // --- Anzeige ---
+  zoneEl.style.left = (zp * 100) + '%';
+  markeEl.style.left = (fp * 100) + '%';
+  fuellungEl.style.width = (Math.min(1, Math.max(0, fortschritt)) * 100) + '%';
+
+  // --- Fischer wackelt hektisch ---
+  // Stärke: EINSTELLUNGEN.WACKEL_STAERKE, Geschwindigkeit: EINSTELLUNGEN.WACKEL_TEMPO
+  const t = jetzt / 1000;
+  const wackeln = (Math.sin(t * 25 * E.WACKEL_TEMPO) * 0.6 + (Math.random() - 0.5) * 0.8) * E.WACKEL_STAERKE;
+  fischerEl.style.setProperty('--wx', wackeln.toFixed(1) + 'px');
+
+  if (fortschritt >= 1) { spielEnde(true); return; }
+  if (fortschritt <= 0 || jetzt - startZeit > E.MAX_DAUER * 1000) { spielEnde(false); return; }
+  rafId = requestAnimationFrame(schritt);
+}
+
+function spielEnde(gewonnen) {
+  cancelAnimationFrame(rafId);
+  phase = 'ergebnis';
+  gedrueckt = false;
+  document.body.classList.remove('im-spiel');
+  fischerEl.style.setProperty('--wx', '0px');
+  leisteEl.classList.remove('aktiv');
+
+  if (gewonnen) {
+    const platz = freierSlot();
+    if (platz < 0) {
+      zeigeMeldung('Inventar voll – Fisch weg!', 'schlecht', 1100);
+    } else {
+      stand.inv[platz] = 'f';
+      stand.gesamt++;
+      zeigeMeldung('Gefangen! +1 Fisch', 'gut', 1100);
+      speichern();
+      anzeigen();
+      syncen();
+    }
+  } else {
+    zeigeMeldung('Entkommen…', 'schlecht', 1100);
+  }
+  setTimeout(function () {
+    phase = 'bereit';
+    knopfEl.disabled = false;
+  }, 1100);
+}
+
+// ---------------------------------------------------------------------
+//  Spielstand in Firebase (nur wenn angemeldet). Gespeichert wird kurz nach jeder Änderung.
+// ---------------------------------------------------------------------
+let cloudBereit = false;     // erst true, wenn der Stand vom Server geladen wurde (sonst würde man ihn überschreiben)
+let cloudTimer = null;
+function spielstandDoc() {
+  return {
+    inv: stand.inv.slice(),
+    muenzen: stand.muenzen,
+    gesamt: stand.gesamt,
+    kachel2: stand.kachel2,
+    ofenRoh: stand.ofenRoh,
+    ofenFertig: stand.ofenFertig,
+    updatedAt: fb.fs.serverTimestamp()
+  };
+}
+function cloudPlanen() {
+  if (!fb || !ich || !cloudBereit) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(cloudSpeichern, 1000);
+}
+async function cloudSpeichern() {
+  if (!fb || !ich || !cloudBereit) return;
+  clearTimeout(cloudTimer);
+  try { await fb.fs.setDoc(fb.fs.doc(fb.db, 'spielstand', ich.uid), spielstandDoc()); } catch (e) {}
+}
+
+anzeigen();
+
+// =====================================================================
+//  RANGLISTE (Firebase) – das Spiel oben läuft auch, wenn das hier nicht lädt
+// =====================================================================
+const FIREBASE_VERSION = '10.14.1';
+const listeEl = $('rang-liste');
+const fussEl = $('rang-fuss');
+
+let fb = null;               // { db, auth, fs, au }
+let ich = null;              // angemeldeter Firebase-Nutzer oder null
+let eigenerName = '';
+let serverWert = null;       // letzter bekannter Fischwert in der Datenbank
+let letzteSyncZeit = 0;      // wann zuletzt gespeichert (ms), für den Zeit-Check der Regeln
+let syncLaeuft = false;
+let authBeschaeftigt = false;// true während Eintragen/Anmelden, damit der Listener nicht dazwischenfunkt
+
+function ranglisteMeldung(text) {
+  listeEl.textContent = '';
+  const p = document.createElement('p');
+  p.className = 'rang-leer';
+  p.textContent = text;
+  listeEl.appendChild(p);
+}
+
+async function firebaseLaden() {
+  try {
+    const basis = 'https://www.gstatic.com/firebasejs/' + FIREBASE_VERSION + '/';
+    const teile = await Promise.all([
+      import(basis + 'firebase-app.js'),
+      import(basis + 'firebase-firestore.js'),
+      import(basis + 'firebase-auth.js'),
+      import('./firebase-config.js')
+    ]);
+    const app = teile[0].initializeApp(teile[3].firebaseConfig);
+    fb = { db: teile[1].getFirestore(app), auth: teile[2].getAuth(app), fs: teile[1], au: teile[2] };
+  } catch (e) {
+    ranglisteMeldung('Rangliste gerade nicht erreichbar.');
+    fussEl.textContent = '';
+    authFertig();
+    return;
+  }
+
+  fb.au.onAuthStateChanged(fb.auth, async function (user) {
+    const vorher = ich;
+    ich = user;
+    if (authBeschaeftigt) { authFertig(); return; }
+    if (user) {
+      const ok = await eintragLaden(user);
+      if (!ok) {   // Konto ohne Eintrag (z. B. von dir in der Konsole gelöscht): aufräumen
+        try { await fb.au.deleteUser(user); } catch (e) {}
+        try { await fb.au.signOut(fb.auth); } catch (e) {}
+        ich = null;
+      }
+    } else {
+      serverWert = null;
+      eigenerName = '';
+      cloudBereit = false;
+      if (vorher) zuruecksetzen();   // abgemeldet -> zurück auf Level 0
+    }
+    ranglisteLaden();
+    syncen();
+    authFertig();
+  });
+}
+
+// Eintrag des Nutzers holen. Gibt false zurück, wenn es keinen gibt.
+async function eintragLaden(user) {
+  try {
+    const snap = await fb.fs.getDoc(fb.fs.doc(fb.db, 'rangliste', user.uid));
+    if (!snap.exists()) return false;
+    const d = snap.data();
+    eigenerName = d.name;
+    serverWert = d.fische;
+    letzteSyncZeit = (d.updatedAt && d.updatedAt.toMillis) ? d.updatedAt.toMillis() : Date.now();
+    // Gespeicherten Spielstand holen. Der ersetzt, was gerade im Browser steht.
+    const ss = await fb.fs.getDoc(fb.fs.doc(fb.db, 'spielstand', user.uid));
+    if (ss.exists()) {
+      stand = standNormalisieren(ss.data());
+      stand.gesamt = Math.max(stand.gesamt, serverWert);
+      cloudBereit = true;
+    } else {
+      // Altes Konto ohne Spielstand: aktuellen Stand übernehmen und hochladen
+      stand.gesamt = Math.max(stand.gesamt, serverWert);
+      cloudBereit = true;
+      cloudPlanen();
+    }
+    lokalSpeichern();
+    anzeigen();
+    return true;
+  } catch (e) {
+    return true;   // Netzfehler: nicht aufräumen
+  }
+}
+
+// Fische in die Datenbank schreiben. Die Regeln erlauben pro Fisch frühestens alle 3 Sekunden.
+async function syncen() {
+  if (!fb || !ich || serverWert === null || syncLaeuft) return;
+  if (stand.gesamt <= serverWert) return;
+  syncLaeuft = true;
+  try {
+    const vergangen = Date.now() - letzteSyncZeit;
+    const maxSchritt = Math.max(1, Math.floor(vergangen / 3500));
+    const neu = Math.min(stand.gesamt, serverWert + maxSchritt);
+    await fb.fs.updateDoc(fb.fs.doc(fb.db, 'rangliste', ich.uid), {
+      fische: neu,
+      updatedAt: fb.fs.serverTimestamp()
+    });
+    serverWert = neu;
+    letzteSyncZeit = Date.now();
+    ranglisteLaden();
+  } catch (e) {
+    // klappt beim nächsten Fisch oder in 20 Sekunden nochmal
+  }
+  syncLaeuft = false;
+}
+
+async function ranglisteLaden() {
+  if (!fb) return;
+  try {
+    const coll = fb.fs.collection(fb.db, 'rangliste');
+    const snap = await fb.fs.getDocs(fb.fs.query(coll, fb.fs.orderBy('fische', 'desc'), fb.fs.limit(10)));
+    const zeilen = snap.docs.map(function (d, i) {
+      return { id: d.id, name: d.data().name, fische: d.data().fische, platz: i + 1 };
+    });
+    let eigen = null;
+    if (ich && serverWert !== null && !zeilen.some(function (z) { return z.id === ich.uid; })) {
+      const c = await fb.fs.getCountFromServer(fb.fs.query(coll, fb.fs.where('fische', '>', serverWert)));
+      eigen = { id: ich.uid, name: eigenerName, fische: serverWert, platz: c.data().count + 1 };
+    }
+    zeichneRangliste(zeilen, eigen);
+  } catch (e) {
+    ranglisteMeldung('Rangliste gerade nicht erreichbar.');
+    zeichneFuss();
+  }
+}
+
+function zeile(z, istIch) {
+  const div = document.createElement('div');
+  div.className = 'rang-zeile' + (istIch ? ' ich' : '');
+  const platz = document.createElement('span');
+  platz.className = 'rang-platz';
+  platz.textContent = z.platz + '.';
+  const name = document.createElement('span');
+  name.className = 'rang-name';
+  name.textContent = z.name;       // textContent: Namen können kein HTML einschleusen
+  const f = document.createElement('span');
+  f.className = 'rang-fische';
+  f.textContent = z.fische;
+  div.appendChild(platz); div.appendChild(name); div.appendChild(f);
+  return div;
+}
+
+function zeichneRangliste(zeilen, eigen) {
+  listeEl.textContent = '';
+  if (zeilen.length === 0) {
+    ranglisteMeldung('Noch niemand eingetragen.');
+  } else {
+    zeilen.forEach(function (z) { listeEl.appendChild(zeile(z, ich && z.id === ich.uid)); });
+  }
+  if (eigen) {
+    const p = document.createElement('p');
+    p.className = 'rang-punkte';
+    p.textContent = '…';
+    listeEl.appendChild(p);
+    listeEl.appendChild(zeile(eigen, true));
+  }
+  zeichneFuss();
+}
+
+function zeichneFuss() {
+  fussEl.textContent = '';
+  function knopf(text, klasse, fn) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = klasse;
+    b.textContent = text;
+    b.addEventListener('click', fn);
+    fussEl.appendChild(b);
+  }
+  if (!ich) {
+    knopf('In die Rangliste eintragen', 'rang-knopf', function () { dialogOeffnen('neu'); });
+    knopf('Schon eingetragen? Anmelden', 'rang-link', function () { dialogOeffnen('login'); });
+  } else {
+    const t = document.createElement('div');
+    t.textContent = 'Eingetragen als ' + eigenerName;
+    fussEl.appendChild(t);
+    knopf('Abmelden', 'rang-link', abmelden);
+    knopf('Eintrag löschen', 'rang-link', eintragLoeschen);
+  }
+}
+
+// ----- Name -> Fake-Mail, damit Firebase Auth benutzt werden kann (der Nutzer sieht nie eine Mail) -----
+async function nameZuMail(name) {
+  const norm = name.trim().normalize('NFKC').toLowerCase().replace(/\s+/g, ' ');
+  if (!window.crypto || !crypto.subtle) throw new Error('kein-https');
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(norm));
+  const hex = Array.prototype.map.call(new Uint8Array(hash), function (b) {
+    return b.toString(16).padStart(2, '0');
+  }).join('').slice(0, 40);
+  return 'f' + hex + '@fischen.hnedim.de';
+}
+
+async function eintragenNeu(name, pw) {
+  const mail = await nameZuMail(name);
+  authBeschaeftigt = true;
+  try {
+    const cred = await fb.au.createUserWithEmailAndPassword(fb.auth, mail, pw);
+    try {
+      await fb.au.updateProfile(cred.user, { displayName: name });
+      const start = Math.min(stand.gesamt, E.START_MAX);
+      await fb.fs.setDoc(fb.fs.doc(fb.db, 'rangliste', cred.user.uid), {
+        name: name,
+        fische: start,
+        updatedAt: fb.fs.serverTimestamp()
+      });
+      ich = cred.user;
+      eigenerName = name;
+      serverWert = start;
+      letzteSyncZeit = Date.now();
+      // aktuellen Spielstand mitspeichern (Fehler hier ist nicht schlimm, wird später nachgeholt)
+      cloudBereit = true;
+      try { await fb.fs.setDoc(fb.fs.doc(fb.db, 'spielstand', cred.user.uid), spielstandDoc()); } catch (e3) {}
+    } catch (e) {
+      try { await fb.au.deleteUser(cred.user); } catch (e2) {}   // kein halbes Konto zurücklassen
+      throw e;
+    }
+  } finally {
+    authBeschaeftigt = false;
+  }
+}
+
+async function anmelden(name, pw) {
+  const mail = await nameZuMail(name);
+  authBeschaeftigt = true;
+  try {
+    const cred = await fb.au.signInWithEmailAndPassword(fb.auth, mail, pw);
+    ich = cred.user;
+    const ok = await eintragLaden(cred.user);
+    if (!ok) {
+      try { await fb.au.deleteUser(cred.user); } catch (e) {}
+      try { await fb.au.signOut(fb.auth); } catch (e) {}
+      ich = null;
+      const err = new Error('kein-eintrag');
+      err.code = 'fischen/kein-eintrag';
+      throw err;
+    }
+  } finally {
+    authBeschaeftigt = false;
+  }
+}
+
+async function abmelden() {
+  await cloudSpeichern();   // erst den Stand sichern, dann abmelden (der Listener setzt danach auf Level 0 zurück)
+  try { await fb.au.signOut(fb.auth); } catch (e) {}
+}
+
+async function eintragLoeschen() {
+  if (!ich) return;
+  if (!confirm('Eintrag in der Rangliste wirklich löschen? Dein Name wird dann wieder frei.')) return;
+  const user = ich;
+  try {
+    cloudBereit = false;
+    try { await fb.fs.deleteDoc(fb.fs.doc(fb.db, 'spielstand', user.uid)); } catch (e2) {}
+    await fb.fs.deleteDoc(fb.fs.doc(fb.db, 'rangliste', user.uid));
+    await fb.au.deleteUser(user);
+  } catch (e) {
+    alert('Das hat nicht ganz geklappt. Melde dich ab, melde dich neu an und versuche es noch einmal.');
+  }
+  ranglisteLaden();
+}
+
+// ----- Dialog Eintragen / Anmelden -----
+const dlg = $('dlg');
+const dlgForm = $('dlg-form');
+const dlgName = $('dlg-name');
+const dlgPw = $('dlg-pw');
+const dlgFehler = $('dlg-fehler');
+const dlgSenden = $('dlg-senden');
+const dlgHinweis = $('dlg-hinweis');
+let modus = 'neu';
+
+function modusSetzen(m) {
+  modus = m;
+  $('tab-neu').classList.toggle('aktiv', m === 'neu');
+  $('tab-login').classList.toggle('aktiv', m === 'login');
+  $('dlg-titel').textContent = m === 'neu' ? 'In die Rangliste eintragen' : 'Anmelden';
+  dlgSenden.textContent = m === 'neu' ? 'Eintragen' : 'Anmelden';
+  dlgPw.autocomplete = m === 'neu' ? 'new-password' : 'current-password';
+  dlgHinweis.textContent = m === 'neu'
+    ? 'Keine E-Mail nötig. Name und Fischzahl sind für alle sichtbar. Passwort: mindestens 6 Zeichen. Du hast bisher ' + stand.gesamt + ' Fische gefangen. Dein Spielstand wird mit dem Konto gespeichert.'
+    : 'Du bekommst deinen gespeicherten Spielstand zurück. Was gerade auf diesem Gerät steht, wird dabei ersetzt.';
+  dlgFehler.textContent = '';
+}
+function dialogOeffnen(m) {
+  modusSetzen(m);
+  dlgForm.reset();
+  if (!dlg.open) dlg.showModal();
+  dlgName.focus();
+}
+$('tab-neu').addEventListener('click', function () { modusSetzen('neu'); });
+$('tab-login').addEventListener('click', function () { modusSetzen('login'); });
+$('dlg-zu').addEventListener('click', function () { dlg.close(); });
+
+function fehlerText(e) {
+  const c = e && e.code;
+  if (c === 'auth/email-already-in-use') return 'Dieser Name ist schon vergeben.';
+  if (c === 'auth/invalid-credential' || c === 'auth/wrong-password' || c === 'auth/user-not-found' || c === 'auth/invalid-login-credentials')
+    return 'Name oder Passwort stimmt nicht.';
+  if (c === 'auth/weak-password') return 'Das Passwort ist zu kurz (mindestens 6 Zeichen).';
+  if (c === 'auth/too-many-requests') return 'Zu viele Versuche. Warte kurz und probiere es nochmal.';
+  if (c === 'auth/network-request-failed') return 'Keine Verbindung. Probiere es nochmal.';
+  if (c === 'auth/operation-not-allowed') return 'Anmeldung ist in Firebase noch nicht aktiviert.';
+  if (c === 'fischen/kein-eintrag') return 'Zu diesem Namen gibt es keinen Eintrag mehr. Trag dich neu ein.';
+  if (e && e.message === 'kein-https') return 'Bitte öffne die Seite über https.';
+  if (c === 'permission-denied') return 'Das hat die Datenbank abgelehnt (Regeln prüfen).';
+  return 'Das hat leider nicht geklappt.';
+}
+
+dlgForm.addEventListener('submit', async function (ev) {
+  ev.preventDefault();
+  if (!fb) { dlgFehler.textContent = 'Rangliste gerade nicht erreichbar.'; return; }
+  const name = dlgName.value.trim().replace(/\s+/g, ' ');
+  const pw = dlgPw.value;
+  if (name.length < 2) { dlgFehler.textContent = 'Der Name braucht mindestens 2 Zeichen.'; return; }
+  if (pw.length < 6) { dlgFehler.textContent = 'Das Passwort braucht mindestens 6 Zeichen.'; return; }
+  dlgSenden.disabled = true;
+  dlgFehler.textContent = '';
+  try {
+    if (modus === 'neu') await eintragenNeu(name, pw);
+    else await anmelden(name, pw);
+    dlg.close();
+    ranglisteLaden();
+    syncen();
+  } catch (e) {
+    dlgFehler.textContent = fehlerText(e);
+  }
+  dlgSenden.disabled = false;
+});
+
+// Regelmäßig: Fische nachtragen (falls etwas nicht durchging) und Rangliste auffrischen
+setInterval(function () { if (!document.hidden) syncen(); }, 20000);
+setInterval(function () { if (!document.hidden) ranglisteLaden(); }, 60000);
+
+zeichneFuss();
+firebaseLaden();
+setTimeout(authFertig, 4000);   // Notfall: Knopf nach 4 s auf jeden Fall freigeben
+</script>
+</body>
+</html>
