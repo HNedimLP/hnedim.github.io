@@ -215,6 +215,7 @@ body.im-spiel{touch-action:none}
   font-size:1.5em;
   cursor:pointer;
 }
+body.im-spiel #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel an seiner Stelle */
 #fischen-knopf:hover{background:rgb(26, 100, 48)}
 #fischen-knopf:disabled{opacity:.55;cursor:default;background:rgb(40, 140, 70)}
 
@@ -233,7 +234,7 @@ body.im-spiel{touch-action:none}
   font-family:"Determination","Courier New",monospace;
   font-size:1.3em;
 }
-#inv{display:grid;grid-template-columns:repeat(5, var(--slot))}
+#inv{display:grid;grid-template-columns:repeat(3, var(--slot))}
 .slot{
   position:relative;
   width:var(--slot);
@@ -509,8 +510,8 @@ const EINSTELLUNGEN = {
                              // (zur Laufzeit änderbar mit fischerTempo(2))
   FISCHER_X: 0,              // Fischer verschieben in Pixeln: + nach rechts, - nach links
   FISCHER_Y: 0,              // + nach unten, - nach oben   (zur Laufzeit: fischerBewegen(x, y))
-  KNOPF_Y: 76,               // Abstand des Fischen-Knopfs unter der Kachel (Pixel)
-  INV_SKALA: 2,              // Größe des Inventars (box.png ist 22x22, also 2 = 44px pro Feld)
+  KNOPF_Y: 12,               // Abstand des Fischen-Knopfs unter der Kachel (Pixel). Im Minispiel liegt die Leiste an derselben Stelle (Knopf ist dann unsichtbar)
+  INV_SKALA: 2,              // Inventar-Größe relativ zur Kachel. 2 = 3x3-Inventar ist etwa so groß wie die Kachel. Größer = größere Felder
   BILD_FISCH: 'fisch.png',   // Sprite für Fische (gebraten = dasselbe Bild, nur dunkel eingefärbt)
   BRATZEIT: 6,               // Sekunden, die ein Fisch am Lagerfeuer braucht
   OFEN_X: 0,                 // Ofen-Fenster verschieben (Pixel). Standard: mittig unter der Kachel 2
@@ -569,13 +570,14 @@ rootStil.setProperty('--feuer-x', E.FEUER_X);
 rootStil.setProperty('--feuer-y', E.FEUER_Y);
 rootStil.setProperty('--feuer-b', E.FEUER_BREITE);
 rootStil.setProperty('--knopf-y', E.KNOPF_Y + 'px');
-rootStil.setProperty('--is', E.INV_SKALA);
 rootStil.setProperty('--pfeil', E.OFEN_PFEIL + 'px');
 rootStil.setProperty('--ofen-x', E.OFEN_X + 'px');
 rootStil.setProperty('--ofen-y', E.OFEN_Y + 'px');
 
 function skalaSetzen() {
-  rootStil.setProperty('--s', window.innerWidth >= E.UMSCHALT_BREITE ? E.SKALA_GROSS : E.SKALA_KLEIN);
+  const s = window.innerWidth >= E.UMSCHALT_BREITE ? E.SKALA_GROSS : E.SKALA_KLEIN;
+  rootStil.setProperty('--s', s);
+  rootStil.setProperty('--is', E.INV_SKALA * s);   // box.png ist 22px -> ganze Vielfache bleiben scharf
 }
 skalaSetzen();
 window.addEventListener('resize', skalaSetzen);
@@ -612,7 +614,7 @@ const pfeilFuell = $('pfeil-fuell');
 //  Firebase (Sammlung "spielstand") gespeichert. Beim Abmelden geht alles auf Level 0.
 // ---------------------------------------------------------------------
 const SPEICHER = 'fischen_stand_v2';
-const SLOTS = 25;
+const SLOTS = 9;   // 3x3 Inventar. MUSS zu firestore.rules passen (inv.size())
 function leerStand() {
   return { inv: new Array(SLOTS).fill(''), muenzen: 0, gesamt: 0, kachel2: false, ofenRoh: 0, ofenFertig: 0 };
 }
@@ -620,7 +622,10 @@ function zahl(v, max) { return Math.min(max, Math.max(0, parseInt(v, 10) || 0));
 function standNormalisieren(o) {
   const s = leerStand();
   if (!o) return s;
-  if (Array.isArray(o.inv)) for (let i = 0; i < SLOTS; i++) s.inv[i] = (o.inv[i] === 'f' || o.inv[i] === 'g') ? o.inv[i] : '';
+  if (Array.isArray(o.inv)) {   // auch alte 5x5-Stände: Fische der Reihe nach in die 9 Felder
+    let k = 0;
+    o.inv.forEach(function (x) { if ((x === 'f' || x === 'g') && k < SLOTS) s.inv[k++] = x; });
+  }
   s.muenzen = zahl(o.muenzen, 1000000);
   s.gesamt = zahl(o.gesamt, 1000000);
   s.kachel2 = !!o.kachel2;
