@@ -36,6 +36,9 @@
   --pfeil:40px;
   --ofen-x:0px;
   --ofen-y:0px;
+  --shop-x:39;
+  --shop-y:39;
+  --shop-b:50;
 }
 
 html,body{margin:0;background:#fff}
@@ -88,6 +91,7 @@ body.im-spiel{touch-action:none}
 }
 #kachel1{left:0}
 #kachel2{left:100%}   /* direkt rechts neben Kachel 1 */
+#kachel3{left:200%}   /* direkt rechts neben Kachel 2 */
 .kachel img{
   display:block;
   image-rendering:pixelated;
@@ -115,7 +119,7 @@ body.im-spiel{touch-action:none}
 #bg2{opacity:0;transition:opacity .8s}
 #kachel2.frei #bg2{opacity:1}
 
-#freischalten{
+#freischalten, #freischalten3{
   position:absolute;
   left:50%;
   top:50%;
@@ -130,9 +134,57 @@ body.im-spiel{touch-action:none}
   cursor:pointer;
   transition:transform .15s, opacity .5s;
 }
-#freischalten:hover{transform:translate(-50%,-50%) scale(1.2)}   /* wird beim Drüberfahren größer */
-#freischalten.rot{color:#c0261c}
+#freischalten:hover, #freischalten3:hover{transform:translate(-50%,-50%) scale(1.2)}   /* wird beim Drüberfahren größer */
+#freischalten.rot, #freischalten3.rot{color:#c0261c}
 #kachel2.frei #freischalten{opacity:0;pointer-events:none}
+
+/* ----- Kachel 3: Shop. Der Freischalten-Text erscheint erst, wenn Kachel 2 offen ist ----- */
+#bg3{opacity:0;transition:opacity .8s}
+#kachel3.frei #bg3{opacity:1}
+#freischalten3{opacity:0;pointer-events:none}
+#kachel3.bereit #freischalten3{opacity:1;pointer-events:auto}
+#shop{
+  position:absolute;
+  left:calc(var(--shop-x) * var(--s) * 1px);
+  top:calc(var(--shop-y) * var(--s) * 1px);
+  width:calc(var(--shop-b) * var(--s) * 1px);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .8s;
+}
+#kachel3.frei #shop{opacity:1;pointer-events:auto;cursor:pointer}
+#shop:hover{filter:brightness(1.12)}
+#shop.ziel{filter:brightness(1.3)}
+
+/* Kaufbox: öffnet sich links neben dem Shop und zeigt die nächste Angel mit Preis */
+#shopbox{
+  position:absolute;
+  display:none;
+  left:calc(var(--shop-x) * var(--s) * 1px - var(--slot) - 8px);
+  top:calc(var(--shop-y) * var(--s) * 1px + (var(--shop-b) * var(--s) * 1px - var(--slot)) / 2);
+  cursor:pointer;
+  z-index:4;
+}
+#shopbox.an{display:flex;animation:fischBounce .3s ease-out}
+#shopbox.max{cursor:default}
+#shopbox.max .item{opacity:.45}
+#shop-preis{
+  position:absolute;
+  top:100%;
+  left:50%;
+  transform:translateX(-50%);
+  margin-top:4px;
+  display:flex;
+  align-items:center;
+  gap:3px;
+  white-space:nowrap;
+  font-family:"Determination","Courier New",monospace;
+  font-size:calc(8px * var(--s));
+  color:#111;
+  pointer-events:none;
+}
+#shop-preis img{width:calc(8px * var(--s));height:calc(8px * var(--s));image-rendering:pixelated}
+#shop-preis.rot{color:#c0261c}
 
 /* ----- Lagerfeuer (erst nach dem Freischalten sichtbar) ----- */
 #feuer.ziel{filter:brightness(1.35)}
@@ -222,12 +274,44 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
 #fischen-knopf:hover{background:rgb(26, 100, 48)}
 #fischen-knopf:disabled{opacity:.55;cursor:default;background:rgb(40, 140, 70)}
 
+/* Kachel mit der aktuellen Angel (links neben dem Fischen-Knopf). box.png ist 22px, angel*.png ist 32px:
+   beides wird in ganzen Vielfachen skaliert, damit die Pixel scharf bleiben. */
+#angel-slot{
+  flex:none;
+  width:calc(22px * var(--is));
+  height:calc(22px * var(--is));
+  background:url("box.png") center/100% 100% no-repeat;
+  image-rendering:pixelated;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#angel-img{
+  width:calc(32px * var(--s));
+  height:calc(32px * var(--s));
+  image-rendering:pixelated;
+  pointer-events:none;
+  -webkit-user-drag:none;
+}
+#angel-img.bounce{animation:fischBounce .45s ease-out}
+
 #zaehler{
+  display:flex;
+  align-items:center;
+  gap:8px;
   font-family:"Determination","Courier New",monospace;
   font-size:1.7em;
   color:#111;
   white-space:nowrap;
 }
+
+#z-gold{
+  width:calc(16px * var(--s));
+  height:calc(16px * var(--s));
+  image-rendering:pixelated;
+  -webkit-user-drag:none;
+}
+#z-gold.bounce{animation:fischBounce .45s ease-out}
 
 /* ===== Inventar (5x5 aus box.png) und Ofen ===== */
 #inv-box{
@@ -254,6 +338,7 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
 }
 .item{width:80%;height:80%;object-fit:contain;image-rendering:pixelated;pointer-events:none;-webkit-user-drag:none}
 .item.g{filter:sepia(1) saturate(3) hue-rotate(-20deg) brightness(.75)}   /* gebratener Fisch = dunkler Platzhalter */
+.item.k{filter:sepia(1) saturate(5) hue-rotate(-5deg) brightness(1.35) drop-shadow(0 0 3px #ffd34d)}   /* goldener Fisch = goldener Platzhalter */
 .slot.zieht .item{opacity:.3}
 .item.bounce{animation:fischBounce .45s ease-out}
 @keyframes fischBounce{
@@ -273,6 +358,7 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
   transform:translate(-50%,-50%);
 }
 .ghost.g{filter:sepia(1) saturate(3) hue-rotate(-20deg) brightness(.75)}
+.ghost.k{filter:sepia(1) saturate(5) hue-rotate(-5deg) brightness(1.35) drop-shadow(0 0 3px #ffd34d)}
 
 #ofen{
   display:none;
@@ -336,7 +422,8 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
 .rang-zeile:nth-child(3n+3){background:#fff0b8}
 .rang-platz{flex:none;width:2.4em}
 .rang-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rang-fische{flex:none;font-weight:bold}
+.rang-gold{flex:none;display:flex;align-items:center;gap:3px;font-weight:bold}
+.rang-gold img{width:16px;height:16px;image-rendering:pixelated}
 .rang-zeile.ich{outline:2px solid rgb(57, 82, 241);outline-offset:-2px;font-weight:bold}
 .rang-punkte{text-align:center;margin:0;padding:0;font-size:1.15em;line-height:.8}
 .rang-leer{padding:8px 12px;margin:0;font-size:1.1em}
@@ -455,6 +542,16 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
       </div>
     </div>
 
+    <!-- Kachel 3: Shop, wird mit gebratenen Fischen freigeschaltet -->
+    <div class="kachel" id="kachel3">
+      <img class="bg" id="bg3" src="fischbg3.png" alt="" draggable="false">
+      <img id="shop" src="shop.png" alt="Shop" draggable="false">
+      <div id="freischalten3" role="button" tabindex="0"></div>
+      <div class="slot" id="shopbox" title="Angel kaufen">
+        <div id="shop-preis"><img src="gold.png" alt="Gold" draggable="false"><span id="shop-preis-zahl"></span></div>
+      </div>
+    </div>
+
     <!-- Unter dem Fischer: Leiste (nur im Minispiel), Meldung, Fisch-Counter -->
     <div id="leistenslot">
       <div id="leiste">
@@ -468,8 +565,9 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
     </div>
   </div>
   <div id="steuer">
+    <div id="angel-slot" title="Deine Angel"><img id="angel-img" src="angel1.png" alt="Angel" draggable="false"></div>
     <button type="button" id="fischen-knopf" disabled>Fischen</button>
-    <div id="zaehler" title="Gold" aria-live="polite"><span id="z-muenzen"></span></div>
+    <div id="zaehler" title="Gold" aria-live="polite"><img id="z-gold" src="gold.png" alt="Gold" draggable="false"><span id="z-muenzen"></span></div>
   </div>
   <div id="inv-box">
     <div id="inv"></div>
@@ -511,21 +609,20 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 const EINSTELLUNGEN = {
 
   // ---------- Ablauf ----------
-  WARTEZEIT_MIN: 2,          // Sekunden: so früh startet das Minispiel frühestens
-  WARTEZEIT_MAX: 15,         // Sekunden: so spät startet es spätestens
   KOSTEN_KACHEL_2: 2,        // so viele Fische kostet fischbg2
-  KAUF_ZIEHT_FISCHE_AB: true,// true = die 2 Fische sind weg (gekauft), false = nur Mindestzahl nötig
-                             // Die Rangliste zählt immer ALLE gefangenen Fische, auch ausgegebene.
+  KOSTEN_KACHEL_3: 3,        // so viele GEBRATENE Fische kostet fischbg3 (mit dem Shop)
+  KAUF_ZIEHT_FISCHE_AB: true,// true = die Fische sind weg (gekauft), false = nur Mindestzahl nötig
+                             // Die Rangliste zählt das komplette verdiente Gold (auch ausgegebenes), keine Fische.
 
   // ---------- Fischer-GIF, Knopf, Inventar, Ofen ----------
   FISCHER_TEMPO: 1,          // Geschwindigkeit des GIFs: 1 = normal, 2 = doppelt so schnell, 0.5 = halb so schnell
                              // (zur Laufzeit änderbar mit fischerTempo(2))
   FISCHER_X: 0,              // Fischer verschieben in Pixeln: + nach rechts, - nach links
   FISCHER_Y: 0,              // + nach unten, - nach oben   (zur Laufzeit: fischerBewegen(x, y))
-  KNOPF_Y: 12,               // Abstand des Fischen-Knopfs unter der Kachel (Pixel). Im Minispiel liegt die Leiste an derselben Stelle (Knopf ist dann unsichtbar)
+  KNOPF_Y: 0,               // Abstand des Fischen-Knopfs unter der Kachel (Pixel). Im Minispiel liegt die Leiste an derselben Stelle (Knopf ist dann unsichtbar)
   INV_SKALA: 2,              // Inventar-Größe relativ zur Kachel. 2 = 3x3-Inventar ist etwa so groß wie die Kachel. Größer = größere Felder
   BILD_FISCH: 'fisch.png',   // Sprite für Fische (gebraten = dasselbe Bild, nur dunkel eingefärbt)
-  BRATZEIT: 18,              // Sekunden, die ein Fisch am Lagerfeuer braucht
+  BRATZEIT: 15,              // Sekunden, die ein Fisch am Lagerfeuer braucht
   OFEN_X: 0,                 // Ofen-Fenster verschieben (Pixel). Standard: mittig über dem Lagerfeuer
   OFEN_Y: 0,                 // + nach unten, - nach oben. Standard: direkt über dem Lagerfeuer
   OFEN_SKALA: 0.75,          // Größe des Ofen-Fensters (1 = normal)
@@ -544,12 +641,15 @@ const EINSTELLUNGEN = {
   ZAEHLER_Y: 130,             // Abstand des Fisch-Counters unter der Kachel (Pixel). Bei größerer Leiste erhöhen.
 
   // ---------- Schwierigkeit des Minispiels ----------
-  ZONE_BREITE: 0.26,         // Größe der grünen Fangzone (0.26 = 26 % der Leiste). Größer = leichter.
+  // Diese Werte gelten je Angel: Stelle 1 = angel1, ... Stelle 5 = angel5.
+  ANGEL_WARTEZEIT_MIN: [5, 4, 3, 2, 1.5],        // Sekunden bis der Fisch frühestens anbeißt
+  ANGEL_WARTEZEIT_MAX: [20, 16, 12, 9, 6],       // Sekunden bis der Fisch spätestens anbeißt
+  ANGEL_ZONE: [0.22, 0.27, 0.32, 0.37, 0.42],    // Größe der grünen Fangzone (0.22 = 22 % der Leiste). Größer = leichter.
+  ANGEL_FUELL_TEMPO: [0.35, 0.42, 0.50, 0.58, 0.66],   // Fortschritt pro Sekunde, wenn der Fisch in der Zone ist
   ZONE_BESCHLEUNIGUNG: 2.6,  // Wie stark die Zone beim Halten nach rechts bzw. beim Loslassen nach links zieht
   ZONE_REIBUNG: 0.965,       // Näher an 1 = rutscht mehr nach, kleiner = bremst schneller
   FISCH_TEMPO: 0.6,          // Wie schnell der Fisch durch die Leiste flitzt. Größer = schwerer.
-  FUELL_TEMPO: 0.4,          // Fortschritt pro Sekunde, wenn der Fisch in der Zone ist
-  LEER_TEMPO: 0.25,          // Fortschritt-Verlust pro Sekunde, wenn er draußen ist
+  LEER_TEMPO: 0.20,          // Fortschritt-Verlust pro Sekunde, wenn er draußen ist
   START_FORTSCHRITT: 0.3,    // Startwert des Fortschritts (0 bis 1)
   MAX_DAUER: 30,             // Sekunden, dann entkommt der Fisch sicher
 
@@ -559,13 +659,27 @@ const EINSTELLUNGEN = {
   FEUER_Y: 64,               // Abstand von oben in der Kachel
   FEUER_BREITE: 40,          // Breite des Lagerfeuers
 
+  // ---------- Gold ----------
+  GOLD_FISCH: 2,             // Gold für einen normalen Fisch (auf den Shop ziehen)
+  GOLD_GEBRATEN: 3,          // Gold für einen gebratenen Fisch
+  GOLD_GOLDFISCH: 20,        // Gold für einen goldenen Fisch (kann nicht gebraten werden)
+  ANGEL_GOLDFISCH_CHANCE: [100, 80, 50, 25, 10],   // Chance auf einen goldenen Fisch je Angel: 1 zu ...
+
+  // ---------- Angeln (angel1.png ... angel5.png) ----------
+  ANGEL_PREISE: [10, 25, 50, 100],   // Gold für angel2, angel3, angel4, angel5 (angel1 hat jeder von Anfang an)
+
+  // ---------- Shop auf Kachel 3 ----------
+  // Angaben in Pixelart-Pixeln der 128er-Kachel (shop.png ist 50x50). Standard: mittig.
+  SHOP_X: 63,                // Abstand von links in der Kachel
+  SHOP_Y: 35,                // Abstand von oben in der Kachel
+
   // ---------- Skalierung ----------
   SKALA_GROSS: 2,            // Pixelart-Skalierung auf Computer
   SKALA_KLEIN: 1,            // Pixelart-Skalierung auf kleinen Bildschirmen (sonst passt Kachel 2 nicht aufs Handy)
   UMSCHALT_BREITE: 800,      // darunter gilt SKALA_KLEIN
 
   // ---------- Rangliste ----------
-  START_MAX: 200             // So viele Fische werden beim Eintragen sofort übernommen. MUSS zu firestore.rules passen!
+  START_MAX: 200             // So viel schon verdientes Gold wird beim Eintragen sofort übernommen. MUSS zu firestore.rules passen!
                              // Der Rest wird danach automatisch nachgetragen.
 };
 const E = EINSTELLUNGEN;
@@ -587,6 +701,8 @@ rootStil.setProperty('--pfeil', E.OFEN_PFEIL + 'px');
 rootStil.setProperty('--ofen-x', E.OFEN_X + 'px');
 rootStil.setProperty('--ofen-y', E.OFEN_Y + 'px');
 rootStil.setProperty('--ofen-skala', E.OFEN_SKALA);
+rootStil.setProperty('--shop-x', E.SHOP_X);
+rootStil.setProperty('--shop-y', E.SHOP_Y);
 
 function skalaSetzen() {
   const s = window.innerWidth >= E.UMSCHALT_BREITE ? E.SKALA_GROSS : E.SKALA_KLEIN;
@@ -603,7 +719,15 @@ const $ = function (id) { return document.getElementById(id); };
 const fischerEl = $('fischer');
 const kachel2 = $('kachel2');
 const freiEl = $('freischalten');
+const kachel3 = $('kachel3');
+const frei3El = $('freischalten3');
 const zMuenzenEl = $('z-muenzen');
+const zGoldEl = $('z-gold');
+const shopEl = $('shop');
+const shopBoxEl = $('shopbox');
+const angelImgEl = $('angel-img');
+const shopPreisEl = $('shop-preis');
+const shopPreisZahl = $('shop-preis-zahl');
 const leisteEl = $('leiste');
 const zoneEl = $('zone');
 const markeEl = $('fischmarke');
@@ -619,10 +743,12 @@ const pfeilFuell = $('pfeil-fuell');
 
 // ---------------------------------------------------------------------
 //  Spielstand
-//  inv        = 25 Felder: '' (leer), 'f' (Fisch), 'g' (gebratener Fisch)
-//  muenzen    = Münzen (Verdienen kommt mit dem Shop auf Kachel 3)
-//  gesamt     = alle je gefangenen Fische (zählt für die Rangliste)
+//  inv        = 9 Felder: '' (leer), 'f' (Fisch), 'g' (gebratener Fisch), 'k' (goldener Fisch)
+//  muenzen    = Gold (gibt es für Fische, die man auf den Shop auf Kachel 3 zieht)
+//  goldGesamt = alles je verdiente Gold, auch ausgegebenes (nur das zählt für die Rangliste)
 //  kachel2    = freigeschaltet?
+//  kachel3    = Shop-Kachel freigeschaltet?
+//  angel      = Stufe der Angel (1 bis 5), jeder startet mit 1
 //  ofenRoh / ofenFertig = Fische im Ofen (roh / fertig zum Einsammeln)
 //  Ohne Anmeldung liegt der Stand im Browser (localStorage). Mit Anmeldung wird er in
 //  Firebase (Sammlung "spielstand") gespeichert. Beim Abmelden geht alles auf Level 0.
@@ -630,7 +756,7 @@ const pfeilFuell = $('pfeil-fuell');
 const SPEICHER = 'fischen_stand_v2';
 const SLOTS = 9;   // 3x3 Inventar. MUSS zu firestore.rules passen (inv.size())
 function leerStand() {
-  return { inv: new Array(SLOTS).fill(''), muenzen: 0, gesamt: 0, kachel2: false, ofenRoh: 0, ofenFertig: 0 };
+  return { inv: new Array(SLOTS).fill(''), muenzen: 0, goldGesamt: 0, kachel2: false, kachel3: false, angel: 1, ofenRoh: 0, ofenFertig: 0 };
 }
 function zahl(v, max) { return Math.min(max, Math.max(0, parseInt(v, 10) || 0)); }
 function standNormalisieren(o) {
@@ -638,11 +764,13 @@ function standNormalisieren(o) {
   if (!o) return s;
   if (Array.isArray(o.inv)) {   // auch alte 5x5-Stände: Fische der Reihe nach in die 9 Felder
     let k = 0;
-    o.inv.forEach(function (x) { if ((x === 'f' || x === 'g') && k < SLOTS) s.inv[k++] = x; });
+    o.inv.forEach(function (x) { if ((x === 'f' || x === 'g' || x === 'k') && k < SLOTS) s.inv[k++] = x; });
   }
   s.muenzen = zahl(o.muenzen, 1000000);
-  s.gesamt = zahl(o.gesamt, 1000000);
+  s.goldGesamt = Math.max(zahl(o.goldGesamt, 1000000), s.muenzen);
   s.kachel2 = !!o.kachel2;
+  s.kachel3 = !!o.kachel3 && s.kachel2;
+  s.angel = Math.min(5, Math.max(1, parseInt(o.angel, 10) || 1));
   s.ofenRoh = zahl(o.ofenRoh, SLOTS);
   s.ofenFertig = zahl(o.ofenFertig, SLOTS);
   return s;
@@ -655,6 +783,7 @@ function speichern() { lokalSpeichern(); cloudPlanen(); }
 function anzahl(typ) { return stand.inv.filter(function (x) { return x === typ; }).length; }
 function freierSlot() { return stand.inv.indexOf(''); }
 function fischText(n) { return n + (n === 1 ? ' Fisch' : ' Fische'); }
+function gebrFischText(n) { return n + (n === 1 ? ' gebratener Fisch' : ' gebratene Fische'); }
 
 // ---------------------------------------------------------------------
 //  Anzeige: Counter, Inventar, Ofen
@@ -670,7 +799,7 @@ for (let i = 0; i < SLOTS; i++) {
 
 function itemEl(typ) {
   const sp = document.createElement('img');
-  sp.className = 'item' + (typ === 'g' ? ' g' : '');
+  sp.className = 'item' + (typ === 'g' ? ' g' : typ === 'k' ? ' k' : '');
   sp.src = E.BILD_FISCH;
   sp.draggable = false;
   return sp;
@@ -687,22 +816,56 @@ function slotFuellen(el, typ, n) {
   }
 }
 
+// ----- Shop: Kaufbox mit der nächsten Angel -----
+let shopOffen = false;
+function angelBild(n) { return 'angel' + n + '.png'; }
+function shopBoxZeichnen() {
+  const zeigen = shopOffen && stand.kachel3;
+  shopBoxEl.classList.toggle('an', zeigen);
+  if (!zeigen) return;
+  const max = stand.angel >= 5;
+  const naechste = max ? 5 : stand.angel + 1;
+  shopBoxEl.classList.toggle('max', max);
+  let img = shopBoxEl.querySelector('img.item');
+  if (!img) {
+    img = document.createElement('img');
+    img.className = 'item';
+    img.draggable = false;
+    shopBoxEl.insertBefore(img, shopPreisEl);
+  }
+  if (img.getAttribute('src') !== angelBild(naechste)) img.src = angelBild(naechste);
+  shopPreisZahl.textContent = max ? 'Max' : E.ANGEL_PREISE[stand.angel - 1];
+  shopPreisEl.firstElementChild.style.display = max ? 'none' : '';
+}
+
 let neuSlot = -1;   // Inventarfeld, in dem gerade ein Fisch gelandet ist (für den Bounce)
 function anzeigen() {
-  zMuenzenEl.textContent = 'G: ' + stand.muenzen;
+  zMuenzenEl.textContent = stand.muenzen;
   kachel2.classList.toggle('frei', stand.kachel2);
+  kachel3.classList.toggle('frei', stand.kachel3);
+  kachel3.classList.toggle('bereit', stand.kachel2 && !stand.kachel3);
   for (let i = 0; i < SLOTS; i++) {
     if (drag && drag.i === i) continue;
     slotFuellen(slotEls[i], stand.inv[i], stand.inv[i] ? 1 : 0);
     if (neuSlot === i && slotEls[i].firstChild) { slotEls[i].firstChild.classList.add('bounce'); neuSlot = -1; }
+  }
+  shopBoxZeichnen();
+  const angelNeu = angelBild(stand.angel);
+  if (angelImgEl.getAttribute('src') !== angelNeu) {
+    angelImgEl.src = angelNeu;
+    angelImgEl.classList.remove('bounce');
+    void angelImgEl.offsetWidth;   // Animation neu starten
+    angelImgEl.classList.add('bounce');
   }
   slotFuellen(ofenIn, 'f', stand.ofenRoh);
   slotFuellen(ofenOut, 'g', stand.ofenFertig);
   ofenEl.classList.toggle('an', stand.kachel2 && (stand.ofenRoh > 0 || stand.ofenFertig > 0));
 }
 freiEl.textContent = 'Freischalten:\n' + fischText(E.KOSTEN_KACHEL_2);
+frei3El.textContent = 'Freischalten:\n' + gebrFischText(E.KOSTEN_KACHEL_3);
 
 function zuruecksetzen() {   // zurück auf Level 0 (beim Abmelden)
+  shopOffen = false;
   clearTimeout(cloudTimer);
   stand = leerStand();
   ofenFortschritt = 0;
@@ -736,6 +899,31 @@ function kaufen() {
   anzeigen();
 }
 freiEl.addEventListener('click', kaufen);
+
+// Kachel 3 (Shop) kaufen: mit gebratenen Fischen aus dem Inventar
+function kaufen3() {
+  if (stand.kachel3 || !stand.kachel2) return;
+  if (anzahl('g') < E.KOSTEN_KACHEL_3) {
+    frei3El.textContent = 'Zu wenig gebratene Fische!';
+    frei3El.classList.add('rot');
+    setTimeout(function () {
+      frei3El.textContent = 'Freischalten:\n' + gebrFischText(E.KOSTEN_KACHEL_3);
+      frei3El.classList.remove('rot');
+    }, 1200);
+    return;
+  }
+  if (E.KAUF_ZIEHT_FISCHE_AB) {
+    let n = E.KOSTEN_KACHEL_3;
+    for (let i = 0; i < SLOTS && n > 0; i++) if (stand.inv[i] === 'g') { stand.inv[i] = ''; n--; }
+  }
+  stand.kachel3 = true;
+  speichern();
+  anzeigen();
+}
+frei3El.addEventListener('click', kaufen3);
+frei3El.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); kaufen3(); }
+});
 freiEl.addEventListener('keydown', function (e) {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); kaufen(); }
 });
@@ -792,6 +980,35 @@ function ueberFeuer(x, y) {
   const r = feuerEl.getBoundingClientRect();
   return x > r.left - 12 && x < r.right + 12 && y > r.top - 12 && y < r.bottom + 12;
 }
+function ueberShop(x, y) {
+  if (!stand.kachel3) return false;
+  const r = shopEl.getBoundingClientRect();
+  return x > r.left - 12 && x < r.right + 12 && y > r.top - 12 && y < r.bottom + 12;
+}
+shopEl.addEventListener('click', function () {
+  if (!stand.kachel3) return;
+  shopOffen = !shopOffen;
+  shopBoxZeichnen();
+});
+shopBoxEl.addEventListener('click', function () {
+  if (stand.angel >= 5) return;
+  const preis = E.ANGEL_PREISE[stand.angel - 1];
+  if (stand.muenzen < preis) {
+    shopPreisEl.classList.add('rot');
+    setTimeout(function () { shopPreisEl.classList.remove('rot'); }, 700);
+    return;
+  }
+  stand.muenzen -= preis;
+  stand.angel++;
+  goldBounce();
+  speichern();
+  anzeigen();
+});
+function goldBounce() {
+  zGoldEl.classList.remove('bounce');
+  void zGoldEl.offsetWidth;   // Animation neu starten
+  zGoldEl.classList.add('bounce');
+}
 invEl.addEventListener('pointerdown', function (e) {
   const sl = e.target.closest('.slot');
   if (!sl) return;
@@ -800,7 +1017,7 @@ invEl.addEventListener('pointerdown', function (e) {
   e.preventDefault();
   const g = document.createElement('img');
   g.src = E.BILD_FISCH;
-  g.className = 'ghost' + (stand.inv[i] === 'g' ? ' g' : '');
+  g.className = 'ghost' + (stand.inv[i] === 'g' ? ' g' : stand.inv[i] === 'k' ? ' k' : '');
   document.body.appendChild(g);
   drag = { i: i, g: g, typ: stand.inv[i] };
   sl.classList.add('zieht');
@@ -811,6 +1028,7 @@ function ziehen(e) {
   drag.g.style.left = e.clientX + 'px';
   drag.g.style.top = e.clientY + 'px';
   feuerEl.classList.toggle('ziel', drag.typ === 'f' && ueberFeuer(e.clientX, e.clientY));
+  shopEl.classList.toggle('ziel', ueberShop(e.clientX, e.clientY));
 }
 window.addEventListener('pointermove', ziehen);
 function ziehenEnde(e, abbruch) {
@@ -819,8 +1037,10 @@ function ziehenEnde(e, abbruch) {
   drag = null;
   d.g.remove();
   feuerEl.classList.remove('ziel');
+  shopEl.classList.remove('ziel');
   slotEls[d.i].classList.remove('zieht');
   if (!abbruch) {
+    let verkauft = false;
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const ziel = el && el.closest ? el.closest('#inv .slot') : null;
     if (ziel && +ziel.dataset.i !== d.i) {
@@ -829,8 +1049,17 @@ function ziehenEnde(e, abbruch) {
     } else if (d.typ === 'f' && ueberFeuer(e.clientX, e.clientY) && stand.ofenRoh < SLOTS) {
       stand.inv[d.i] = '';
       stand.ofenRoh++;
+    } else if (ueberShop(e.clientX, e.clientY)) {
+      // Fisch verkaufen: normal = GOLD_FISCH, gebraten = GOLD_GEBRATEN
+      stand.inv[d.i] = '';
+      const verdient = d.typ === 'g' ? E.GOLD_GEBRATEN : d.typ === 'k' ? E.GOLD_GOLDFISCH : E.GOLD_FISCH;
+      stand.muenzen = Math.min(1000000, stand.muenzen + verdient);
+      stand.goldGesamt = Math.min(1000000, stand.goldGesamt + verdient);   // Rangliste: Ausgeben senkt das nicht
+      goldBounce();
+      verkauft = true;
     }
     speichern();
+    if (verkauft) syncen();
   }
   anzeigen();
 }
@@ -1036,7 +1265,7 @@ knopfEl.addEventListener('click', function () {
   spiele(sndAuswerfen);
   if (sndMeer.paused) meerStarten();   // Meeresrauschen: beim ersten Klick, danach Loop
   gifAbspielen();
-  warteTimer = setTimeout(startSpiel, zufall(E.WARTEZEIT_MIN, E.WARTEZEIT_MAX) * 1000);
+  warteTimer = setTimeout(startSpiel, zufall(E.ANGEL_WARTEZEIT_MIN[stand.angel - 1], E.ANGEL_WARTEZEIT_MAX[stand.angel - 1]) * 1000);
 });
 
 // Eingabe: Maus/Finger gedrückt halten oder Leertaste.
@@ -1061,10 +1290,12 @@ window.addEventListener('keyup', function (e) {
 
 // Zustand des Minispiels (Positionen laufen von 0 bis 1 über die Leiste)
 let zp, zv, fp, fv, ziel, zielZeit, fischTempo, fortschritt, letzteZeit, startZeit, rafId;
-const zw = E.ZONE_BREITE;
+let zw = E.ANGEL_ZONE[0], fuellTempo = E.ANGEL_FUELL_TEMPO[0];   // werden bei jedem Start je nach Angel gesetzt
 
 function startSpiel() {
   phase = 'spiel';
+  zw = E.ANGEL_ZONE[stand.angel - 1];
+  fuellTempo = E.ANGEL_FUELL_TEMPO[stand.angel - 1];
   spiele(sndDrip);
   spiele(sndReeling);
   gedrueckt = false;
@@ -1104,7 +1335,7 @@ function schritt(jetzt) {
 
   // --- Fortschritt ---
   const drin = fp >= zp && fp <= zp + zw;
-  fortschritt += (drin ? E.FUELL_TEMPO : -E.LEER_TEMPO) * dt;
+  fortschritt += (drin ? fuellTempo : -E.LEER_TEMPO) * dt;
 
   // --- Anzeige ---
   zoneEl.style.left = (zp * 100) + '%';
@@ -1136,13 +1367,13 @@ function spielEnde(gewonnen) {
     if (platz < 0) {
       zeigeMeldung('Inventar voll – Fisch weg!', 'schlecht', 1100);
     } else {
-      stand.inv[platz] = 'f';
-      stand.gesamt++;
+      const golden = Math.random() < 1 / E.ANGEL_GOLDFISCH_CHANCE[stand.angel - 1];   // 1 zu X
+      stand.inv[platz] = golden ? 'k' : 'f';
+      if (golden) zeigeMeldung('Goldener Fisch!', 'gut', 1500);
       spiele(sndDrop);
       neuSlot = platz;
       speichern();
       anzeigen();
-      syncen();
     }
   } else {
     zeigeMeldung('Entkommen…', 'schlecht', 1100);
@@ -1162,8 +1393,10 @@ function spielstandDoc() {
   return {
     inv: stand.inv.slice(),
     muenzen: stand.muenzen,
-    gesamt: stand.gesamt,
+    goldGesamt: stand.goldGesamt,
     kachel2: stand.kachel2,
+    kachel3: stand.kachel3,
+    angel: stand.angel,
     ofenRoh: stand.ofenRoh,
     ofenFertig: stand.ofenFertig,
     updatedAt: fb.fs.serverTimestamp()
@@ -1192,7 +1425,7 @@ const fussEl = $('rang-fuss');
 let fb = null;               // { db, auth, fs, au }
 let ich = null;              // angemeldeter Firebase-Nutzer oder null
 let eigenerName = '';
-let serverWert = null;       // letzter bekannter Fischwert in der Datenbank
+let serverWert = null;       // letzter bekannter Goldwert der Rangliste in der Datenbank
 let letzteSyncZeit = 0;      // wann zuletzt gespeichert (ms), für den Zeit-Check der Regeln
 let syncLaeuft = false;
 let authBeschaeftigt = false;// true während Eintragen/Anmelden, damit der Listener nicht dazwischenfunkt
@@ -1254,17 +1487,17 @@ async function eintragLaden(user) {
     if (!snap.exists()) return false;
     const d = snap.data();
     eigenerName = d.name;
-    serverWert = d.fische;
+    serverWert = d.gold;
     letzteSyncZeit = (d.updatedAt && d.updatedAt.toMillis) ? d.updatedAt.toMillis() : Date.now();
     // Gespeicherten Spielstand holen. Der ersetzt, was gerade im Browser steht.
     const ss = await fb.fs.getDoc(fb.fs.doc(fb.db, 'spielstand', user.uid));
     if (ss.exists()) {
       stand = standNormalisieren(ss.data());
-      stand.gesamt = Math.max(stand.gesamt, serverWert);
+      stand.goldGesamt = Math.max(stand.goldGesamt, serverWert);
       cloudBereit = true;
     } else {
       // Altes Konto ohne Spielstand: aktuellen Stand übernehmen und hochladen
-      stand.gesamt = Math.max(stand.gesamt, serverWert);
+      stand.goldGesamt = Math.max(stand.goldGesamt, serverWert);
       cloudBereit = true;
       cloudPlanen();
     }
@@ -1276,24 +1509,26 @@ async function eintragLaden(user) {
   }
 }
 
-// Fische in die Datenbank schreiben. Die Regeln erlauben pro Fisch frühestens alle 3 Sekunden.
+// Gold in die Datenbank schreiben. Die Regeln erlauben höchstens 10 Gold pro Sekunde seit dem letzten Speichern
+// (wir nehmen etwas weniger, damit es sicher durchgeht). Fehlt noch etwas, geht es automatisch weiter.
 async function syncen() {
   if (!fb || !ich || serverWert === null || syncLaeuft) return;
-  if (stand.gesamt <= serverWert) return;
+  if (stand.goldGesamt <= serverWert) return;
+  const maxSchritt = Math.floor((Date.now() - letzteSyncZeit) / 150);
+  if (maxSchritt < 1) { setTimeout(syncen, 1500); return; }
   syncLaeuft = true;
   try {
-    const vergangen = Date.now() - letzteSyncZeit;
-    const maxSchritt = Math.max(1, Math.floor(vergangen / 3500));
-    const neu = Math.min(stand.gesamt, serverWert + maxSchritt);
+    const neu = Math.min(stand.goldGesamt, serverWert + maxSchritt);
     await fb.fs.updateDoc(fb.fs.doc(fb.db, 'rangliste', ich.uid), {
-      fische: neu,
+      gold: neu,
       updatedAt: fb.fs.serverTimestamp()
     });
     serverWert = neu;
     letzteSyncZeit = Date.now();
     ranglisteLaden();
+    if (stand.goldGesamt > serverWert) setTimeout(syncen, 3000);
   } catch (e) {
-    // klappt beim nächsten Fisch oder in 20 Sekunden nochmal
+    // klappt beim nächsten Verkauf oder in 20 Sekunden nochmal
   }
   syncLaeuft = false;
 }
@@ -1302,14 +1537,14 @@ async function ranglisteLaden() {
   if (!fb) return;
   try {
     const coll = fb.fs.collection(fb.db, 'rangliste');
-    const snap = await fb.fs.getDocs(fb.fs.query(coll, fb.fs.orderBy('fische', 'desc'), fb.fs.limit(10)));
+    const snap = await fb.fs.getDocs(fb.fs.query(coll, fb.fs.orderBy('gold', 'desc'), fb.fs.limit(10)));
     const zeilen = snap.docs.map(function (d, i) {
-      return { id: d.id, name: d.data().name, fische: d.data().fische, platz: i + 1 };
+      return { id: d.id, name: d.data().name, gold: d.data().gold, platz: i + 1 };
     });
     let eigen = null;
     if (ich && serverWert !== null && !zeilen.some(function (z) { return z.id === ich.uid; })) {
-      const c = await fb.fs.getCountFromServer(fb.fs.query(coll, fb.fs.where('fische', '>', serverWert)));
-      eigen = { id: ich.uid, name: eigenerName, fische: serverWert, platz: c.data().count + 1 };
+      const c = await fb.fs.getCountFromServer(fb.fs.query(coll, fb.fs.where('gold', '>', serverWert)));
+      eigen = { id: ich.uid, name: eigenerName, gold: serverWert, platz: c.data().count + 1 };
     }
     zeichneRangliste(zeilen, eigen);
   } catch (e) {
@@ -1327,10 +1562,13 @@ function zeile(z, istIch) {
   const name = document.createElement('span');
   name.className = 'rang-name';
   name.textContent = z.name;       // textContent: Namen können kein HTML einschleusen
-  const f = document.createElement('span');
-  f.className = 'rang-fische';
-  f.textContent = z.fische;
-  div.appendChild(platz); div.appendChild(name); div.appendChild(f);
+  const g = document.createElement('span');
+  g.className = 'rang-gold';
+  g.appendChild(document.createTextNode(z.gold));
+  const icon = document.createElement('img');
+  icon.src = 'gold.png'; icon.alt = 'Gold'; icon.draggable = false;
+  g.appendChild(icon);
+  div.appendChild(platz); div.appendChild(name); div.appendChild(g);
   return div;
 }
 
@@ -1394,10 +1632,10 @@ async function eintragenNeu(name, pw) {
     const cred = await fb.au.createUserWithEmailAndPassword(fb.auth, mail, pw);
     try {
       await fb.au.updateProfile(cred.user, { displayName: name });
-      const start = Math.min(stand.gesamt, E.START_MAX);
+      const start = Math.min(stand.goldGesamt, E.START_MAX);
       await fb.fs.setDoc(fb.fs.doc(fb.db, 'rangliste', cred.user.uid), {
         name: name,
-        fische: start,
+        gold: start,
         updatedAt: fb.fs.serverTimestamp()
       });
       ich = cred.user;
@@ -1474,7 +1712,7 @@ function modusSetzen(m) {
   dlgSenden.textContent = m === 'neu' ? 'Eintragen' : 'Anmelden';
   dlgPw.autocomplete = m === 'neu' ? 'new-password' : 'current-password';
   dlgHinweis.textContent = m === 'neu'
-    ? 'Durchs Speichern wirst du in die Rangliste eingetragen.'
+    ? 'Durchs Speichern wirst du in die Rangliste eingetragen. Dort zählt nur das Gold, das du verdienst.'
     : 'Du bekommst deinen gespeicherten Spielstand zurück. Was gerade auf diesem Gerät steht, wird dabei ersetzt.';
   dlgFehler.textContent = '';
 }
@@ -1524,7 +1762,7 @@ dlgForm.addEventListener('submit', async function (ev) {
   dlgSenden.disabled = false;
 });
 
-// Regelmäßig: Fische nachtragen (falls etwas nicht durchging) und Rangliste auffrischen
+// Regelmäßig: Gold nachtragen (falls etwas nicht durchging) und Rangliste auffrischen
 setInterval(function () { if (!document.hidden) syncen(); }, 20000);
 setInterval(function () { if (!document.hidden) ranglisteLaden(); }, 60000);
 
