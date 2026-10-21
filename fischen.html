@@ -32,7 +32,7 @@
   --fy:0px;
   --knopf-y:76px;
   --is:2;                /* Inventar-Skalierung */
-  --slot:calc(22px * var(--is));
+  --slot:calc(22px * var(--is) * .75);
   --pfeil:40px;
   --ofen-x:0px;
   --ofen-y:0px;
@@ -122,8 +122,9 @@ body.im-spiel{touch-action:none}
   transform:translate(-50%,-50%);
   width:90%;
   text-align:center;
+  white-space:pre-line;
   font-family:"Determination","Courier New",monospace;
-  font-size:calc(11px * var(--s));
+  font-size:calc(10.4px * var(--s));   /* = 1.3em bei Skala 2, wie der frühere Inventar-Text */
   line-height:1.2;
   color:#111;
   cursor:pointer;
@@ -164,7 +165,7 @@ body.im-spiel{touch-action:none}
   background:#f1f1f1;
   border:3px solid #222;
   border-radius:6px;
-  overflow:hidden;
+  overflow:visible;
 }
 #zone{
   position:absolute;
@@ -179,13 +180,14 @@ body.im-spiel{touch-action:none}
   position:absolute;
   top:50%;
   transform:translate(-50%,-50%);
-  height:calc(var(--leiste-h) * .8);
+  height:calc(var(--leiste-h) * 1.6);
   width:auto;
+  z-index:2;
   image-rendering:pixelated;
 }
 #fortschritt{
   height:8px;
-  margin-top:4px;
+  margin-top:14px;
   border:2px solid #222;
   border-radius:4px;
   background:#f1f1f1;
@@ -200,7 +202,7 @@ body.im-spiel{touch-action:none}
   font-size:1.5em;
   white-space:nowrap;
 }
-#meldung.an{display:block}
+#meldung.an{display:block;line-height:40px}
 #meldung.gut{color:rgb(26, 110, 50)}
 #meldung.schlecht{color:#c0261c}
 
@@ -215,7 +217,8 @@ body.im-spiel{touch-action:none}
   font-size:1.5em;
   cursor:pointer;
 }
-body.im-spiel #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel an seiner Stelle */
+body.im-spiel #fischen-knopf,
+body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel an seiner Stelle */
 #fischen-knopf:hover{background:rgb(26, 100, 48)}
 #fischen-knopf:disabled{opacity:.55;cursor:default;background:rgb(40, 140, 70)}
 
@@ -228,13 +231,13 @@ body.im-spiel #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel a
 
 /* ===== Inventar (5x5 aus box.png) und Ofen ===== */
 #inv-box{
-  margin:14px auto 0;
+  margin:40px auto 0;
   width:fit-content;
   text-align:center;
   font-family:"Determination","Courier New",monospace;
   font-size:1.3em;
 }
-#inv{display:grid;grid-template-columns:repeat(3, var(--slot))}
+#inv{display:grid;grid-template-columns:repeat(3, var(--slot));gap:3px}
 .slot{
   position:relative;
   width:var(--slot);
@@ -252,6 +255,13 @@ body.im-spiel #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel a
 .item{width:80%;height:80%;object-fit:contain;image-rendering:pixelated;pointer-events:none;-webkit-user-drag:none}
 .item.g{filter:sepia(1) saturate(3) hue-rotate(-20deg) brightness(.75)}   /* gebratener Fisch = dunkler Platzhalter */
 .slot.zieht .item{opacity:.3}
+.item.bounce{animation:fischBounce .45s ease-out}
+@keyframes fischBounce{
+  0%{transform:scale(.6)}
+  45%{transform:scale(1.12)}
+  70%{transform:scale(.96)}
+  100%{transform:scale(1)}
+}
 .badge{
   position:absolute;right:3px;bottom:0;
   font-family:"Determination","Courier New",monospace;
@@ -267,9 +277,11 @@ body.im-spiel #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel a
 #ofen{
   display:none;
   position:absolute;
-  left:50%;
-  top:calc(100% + 14px);
-  transform:translate(calc(-50% + var(--ofen-x)), var(--ofen-y));
+  /* mittig über dem Lagerfeuer */
+  left:calc(var(--feuer-x) * var(--s) * 1.06px + var(--feuer-b) * var(--s) * 1.4px / 2);
+  bottom:calc(100% - var(--feuer-y) * var(--s) * 1.03px + 4px);
+  transform:translate(calc(-50% + var(--ofen-x)), var(--ofen-y)) scale(var(--ofen-skala, .75));
+  transform-origin:center bottom;
   align-items:center;
   gap:10px;
 }
@@ -282,7 +294,8 @@ body.im-spiel #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel a
 
 /* ===== Rangliste (Stil wie die News-Box) ===== */
 .news{
-  margin:24px 10px;
+  width:160px;
+  margin:24px auto;
   position:relative;
   border:3px solid rgb(57, 82, 241);
   border-radius:8px;
@@ -305,7 +318,7 @@ body.im-spiel #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel a
     top:50%;
     right:10px;
     transform:translateY(-50%);
-    width:320px;
+    width:160px;
     margin:0;
     z-index:50;
   }
@@ -459,7 +472,6 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
     <div id="zaehler" title="Gold" aria-live="polite"><span id="z-muenzen"></span></div>
   </div>
   <div id="inv-box">
-    <div>Inventar</div>
     <div id="inv"></div>
   </div>
 </main>
@@ -513,9 +525,10 @@ const EINSTELLUNGEN = {
   KNOPF_Y: 12,               // Abstand des Fischen-Knopfs unter der Kachel (Pixel). Im Minispiel liegt die Leiste an derselben Stelle (Knopf ist dann unsichtbar)
   INV_SKALA: 2,              // Inventar-Größe relativ zur Kachel. 2 = 3x3-Inventar ist etwa so groß wie die Kachel. Größer = größere Felder
   BILD_FISCH: 'fisch.png',   // Sprite für Fische (gebraten = dasselbe Bild, nur dunkel eingefärbt)
-  BRATZEIT: 6,               // Sekunden, die ein Fisch am Lagerfeuer braucht
-  OFEN_X: 0,                 // Ofen-Fenster verschieben (Pixel). Standard: mittig unter der Kachel 2
-  OFEN_Y: 0,
+  BRATZEIT: 18,              // Sekunden, die ein Fisch am Lagerfeuer braucht
+  OFEN_X: 0,                 // Ofen-Fenster verschieben (Pixel). Standard: mittig über dem Lagerfeuer
+  OFEN_Y: 0,                 // + nach unten, - nach oben. Standard: direkt über dem Lagerfeuer
+  OFEN_SKALA: 0.75,          // Größe des Ofen-Fensters (1 = normal)
   OFEN_PFEIL: 40,            // Größe von rpfeil.png (Pixel)
 
   // ---------- Wackeln des Fischers im Minispiel ----------
@@ -573,6 +586,7 @@ rootStil.setProperty('--knopf-y', E.KNOPF_Y + 'px');
 rootStil.setProperty('--pfeil', E.OFEN_PFEIL + 'px');
 rootStil.setProperty('--ofen-x', E.OFEN_X + 'px');
 rootStil.setProperty('--ofen-y', E.OFEN_Y + 'px');
+rootStil.setProperty('--ofen-skala', E.OFEN_SKALA);
 
 function skalaSetzen() {
   const s = window.innerWidth >= E.UMSCHALT_BREITE ? E.SKALA_GROSS : E.SKALA_KLEIN;
@@ -673,18 +687,20 @@ function slotFuellen(el, typ, n) {
   }
 }
 
+let neuSlot = -1;   // Inventarfeld, in dem gerade ein Fisch gelandet ist (für den Bounce)
 function anzeigen() {
   zMuenzenEl.textContent = 'G: ' + stand.muenzen;
   kachel2.classList.toggle('frei', stand.kachel2);
   for (let i = 0; i < SLOTS; i++) {
     if (drag && drag.i === i) continue;
     slotFuellen(slotEls[i], stand.inv[i], stand.inv[i] ? 1 : 0);
+    if (neuSlot === i && slotEls[i].firstChild) { slotEls[i].firstChild.classList.add('bounce'); neuSlot = -1; }
   }
   slotFuellen(ofenIn, 'f', stand.ofenRoh);
   slotFuellen(ofenOut, 'g', stand.ofenFertig);
   ofenEl.classList.toggle('an', stand.kachel2 && (stand.ofenRoh > 0 || stand.ofenFertig > 0));
 }
-freiEl.textContent = 'Freischalten: ' + fischText(E.KOSTEN_KACHEL_2);
+freiEl.textContent = 'Freischalten:\n' + fischText(E.KOSTEN_KACHEL_2);
 
 function zuruecksetzen() {   // zurück auf Level 0 (beim Abmelden)
   clearTimeout(cloudTimer);
@@ -705,7 +721,7 @@ function kaufen() {
     freiEl.textContent = 'Zu wenig Fische!';
     freiEl.classList.add('rot');
     setTimeout(function () {
-      freiEl.textContent = 'Freischalten: ' + fischText(E.KOSTEN_KACHEL_2);
+      freiEl.textContent = 'Freischalten:\n' + fischText(E.KOSTEN_KACHEL_2);
       freiEl.classList.remove('rot');
     }, 1200);
     return;
@@ -715,6 +731,7 @@ function kaufen() {
     for (let i = 0; i < SLOTS && n > 0; i++) if (stand.inv[i] === 'f') { stand.inv[i] = ''; n--; }
   }
   stand.kachel2 = true;
+  spiele(feuerSound);   // Lagerfeuer-Sound startet direkt beim Freischalten
   speichern();
   anzeigen();
 }
@@ -726,6 +743,34 @@ freiEl.addEventListener('keydown', function (e) {
 // ---------------------------------------------------------------------
 //  Lagerfeuer (genau wie auf der Startseite: Klick startet/stoppt den Sound)
 // ---------------------------------------------------------------------
+function spiele(a) {
+  try { a.currentTime = 0; const p = a.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+}
+function stoppe(a) { try { a.pause(); a.currentTime = 0; } catch (e) {} }
+const sndAuswerfen = new Audio('auswerfen.mp3');
+sndAuswerfen.volume = 0.5;
+const sndDrip = new Audio('drip.mp3');
+sndDrip.volume = 0.5;
+const sndReeling = new Audio('reeling.mp3');
+sndReeling.loop = true;
+const sndDrop = new Audio('drop.mp3');
+sndDrop.volume = 0.05;
+const sndMeer = new Audio('sea-ambience.mp3');
+sndMeer.loop = true;
+const MEER_FADE = 30;   // Sekunden, bis das Meeresrauschen die volle Lautstärke hat
+let meerFade = null;
+function meerStarten() {
+  sndMeer.volume = 0;
+  const p = sndMeer.play();
+  if (p && p.catch) p.catch(function () {});
+  const t0 = performance.now();
+  clearInterval(meerFade);
+  meerFade = setInterval(function () {
+    const f = Math.min(1, (performance.now() - t0) / (MEER_FADE * 1000));
+    sndMeer.volume = f;
+    if (f >= 1) clearInterval(meerFade);
+  }, 100);
+}
 const feuerSound = new Audio('lagerfeuer.mp3');
 feuerSound.loop = true;
 feuerEl.addEventListener('click', function () {
@@ -979,7 +1024,8 @@ function zeigeMeldung(text, klasse, ms) {
   meldungEl.textContent = text;
   meldungEl.className = 'an ' + klasse;
   clearTimeout(meldungTimer);
-  meldungTimer = setTimeout(function () { meldungEl.className = ''; }, ms);
+  document.body.classList.add('meldung-an');
+  meldungTimer = setTimeout(function () { meldungEl.className = ''; document.body.classList.remove('meldung-an'); }, ms);
 }
 
 knopfEl.addEventListener('click', function () {
@@ -987,6 +1033,8 @@ knopfEl.addEventListener('click', function () {
   if (freierSlot() < 0) { zeigeMeldung('Inventar voll!', 'schlecht', 1200); return; }
   phase = 'warten';
   knopfEl.disabled = true;
+  spiele(sndAuswerfen);
+  if (sndMeer.paused) meerStarten();   // Meeresrauschen: beim ersten Klick, danach Loop
   gifAbspielen();
   warteTimer = setTimeout(startSpiel, zufall(E.WARTEZEIT_MIN, E.WARTEZEIT_MAX) * 1000);
 });
@@ -1017,6 +1065,8 @@ const zw = E.ZONE_BREITE;
 
 function startSpiel() {
   phase = 'spiel';
+  spiele(sndDrip);
+  spiele(sndReeling);
   gedrueckt = false;
   zp = 0.5 - zw / 2; zv = 0;
   fp = 0.5; fv = 0;
@@ -1074,6 +1124,7 @@ function schritt(jetzt) {
 
 function spielEnde(gewonnen) {
   cancelAnimationFrame(rafId);
+  stoppe(sndReeling);
   phase = 'ergebnis';
   gedrueckt = false;
   document.body.classList.remove('im-spiel');
@@ -1087,7 +1138,8 @@ function spielEnde(gewonnen) {
     } else {
       stand.inv[platz] = 'f';
       stand.gesamt++;
-      zeigeMeldung('Gefangen! +1 Fisch', 'gut', 1100);
+      spiele(sndDrop);
+      neuSlot = platz;
       speichern();
       anzeigen();
       syncen();
@@ -1310,8 +1362,8 @@ function zeichneFuss() {
     fussEl.appendChild(b);
   }
   if (!ich) {
-    knopf('In die Rangliste eintragen', 'rang-knopf', function () { dialogOeffnen('neu'); });
-    knopf('Schon eingetragen? Anmelden', 'rang-link', function () { dialogOeffnen('login'); });
+    knopf('Speichern', 'rang-knopf', function () { dialogOeffnen('neu'); });
+    knopf('Anmelden', 'rang-link', function () { dialogOeffnen('login'); });
   } else {
     const t = document.createElement('div');
     t.textContent = 'Eingetragen als ' + eigenerName;
@@ -1422,7 +1474,7 @@ function modusSetzen(m) {
   dlgSenden.textContent = m === 'neu' ? 'Eintragen' : 'Anmelden';
   dlgPw.autocomplete = m === 'neu' ? 'new-password' : 'current-password';
   dlgHinweis.textContent = m === 'neu'
-    ? 'Keine E-Mail nötig. Name und Fischzahl sind für alle sichtbar. Passwort: mindestens 6 Zeichen. Du hast bisher ' + stand.gesamt + ' Fische gefangen. Dein Spielstand wird mit dem Konto gespeichert.'
+    ? 'Durchs Speichern wirst du in die Rangliste eingetragen.'
     : 'Du bekommst deinen gespeicherten Spielstand zurück. Was gerade auf diesem Gerät steht, wird dabei ersetzt.';
   dlgFehler.textContent = '';
 }
