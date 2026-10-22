@@ -31,8 +31,10 @@
   --fx:0px;               /* Fischer verschieben (setzt fischerBewegen) */
   --fy:0px;
   --knopf-y:76px;
+  --knopf-h:44px;        /* Höhe von Fischen-Knopf = Größe der Angel-Kachel (22px box.png x2, bleibt scharf) */
   --is:2;                /* Inventar-Skalierung */
   --slot:calc(22px * var(--is) * .75);
+  --inv-slot:calc(22px * var(--is) * .6);   /* Inventar-Felder: 20 % kleiner als vorher (.75 -> .6) */
   --pfeil:40px;
   --ofen-x:0px;
   --ofen-y:0px;
@@ -247,20 +249,34 @@ body.im-spiel{touch-action:none}
 }
 #fuellung{height:100%;width:0;background:rgb(40, 140, 70)}
 
+#knopf-wrap{position:relative;flex:none;height:var(--knopf-h)}
 #meldung{
   display:none;
+  position:absolute;
+  inset:0;
+  padding:0 4px;
+  align-items:center;
+  justify-content:center;
   text-align:center;
   font-family:"Determination","Courier New",monospace;
-  font-size:1.5em;
-  white-space:nowrap;
+  font-size:.8em;
+  line-height:1.05;
+  white-space:normal;
+  pointer-events:none;
 }
-#meldung.an{display:block;line-height:40px}
+#meldung.an{display:flex}
 #meldung.gut{color:rgb(26, 110, 50)}
 #meldung.schlecht{color:#c0261c}
 
-#steuer{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:var(--knopf-y)}
+/* 3 Spalten: der Fischen-Knopf sitzt genau in der Mitte (unter der Kachel), Angel links und Gold rechts daneben */
+#steuer{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:18px;width:100%;margin-top:var(--knopf-y)}
+#angel-slot{justify-self:end}
+#zaehler{justify-self:start}
 #fischen-knopf{
-  padding:6px 26px;
+  box-sizing:border-box;
+  height:var(--knopf-h);
+  min-width:130px;
+  padding:0 26px;
   border:0;
   border-radius:8px;
   background:rgb(40, 140, 70);
@@ -270,7 +286,7 @@ body.im-spiel{touch-action:none}
   cursor:pointer;
 }
 body.im-spiel #fischen-knopf,
-body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel an seiner Stelle */
+body.meldung-an #fischen-knopf{visibility:hidden}   /* Platz bleibt frei: dort steht kurz die Meldung (Entkommen… usw.) bzw. liegt im Minispiel die Leiste */
 #fischen-knopf:hover{background:rgb(26, 100, 48)}
 #fischen-knopf:disabled{opacity:.55;cursor:default;background:rgb(40, 140, 70)}
 
@@ -278,8 +294,8 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
    beides wird in ganzen Vielfachen skaliert, damit die Pixel scharf bleiben. */
 #angel-slot{
   flex:none;
-  width:calc(22px * var(--is));
-  height:calc(22px * var(--is));
+  width:var(--knopf-h);
+  height:var(--knopf-h);
   background:url("box.png") center/100% 100% no-repeat;
   image-rendering:pixelated;
   display:flex;
@@ -287,8 +303,8 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
   justify-content:center;
 }
 #angel-img{
-  width:calc(32px * var(--s));
-  height:calc(32px * var(--s));
+  width:32px;
+  height:32px;
   image-rendering:pixelated;
   pointer-events:none;
   -webkit-user-drag:none;
@@ -315,13 +331,13 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
 
 /* ===== Inventar (5x5 aus box.png) und Ofen ===== */
 #inv-box{
-  margin:40px auto 0;
+  margin:5px auto 0;
   width:fit-content;
   text-align:center;
   font-family:"Determination","Courier New",monospace;
   font-size:1.3em;
 }
-#inv{display:grid;grid-template-columns:repeat(3, var(--slot));gap:3px}
+#inv{--slot:var(--inv-slot);display:grid;grid-template-columns:repeat(3, var(--slot));gap:3px}
 .slot{
   position:relative;
   width:var(--slot);
@@ -354,7 +370,7 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
 }
 .ghost{
   position:fixed;z-index:300;pointer-events:none;
-  width:calc(var(--slot) * .8);height:calc(var(--slot) * .8);object-fit:contain;image-rendering:pixelated;
+  width:calc(var(--inv-slot) * .8);height:calc(var(--inv-slot) * .8);object-fit:contain;image-rendering:pixelated;
   transform:translate(-50%,-50%);
 }
 .ghost.g{filter:sepia(1) saturate(3) hue-rotate(-20deg) brightness(.75)}
@@ -380,7 +396,7 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
 
 /* ===== Rangliste (Stil wie die News-Box) ===== */
 .news{
-  width:160px;
+  width:220px;
   margin:24px auto;
   position:relative;
   border:3px solid rgb(57, 82, 241);
@@ -398,13 +414,15 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
   font-family:"Thunderman",Arial,sans-serif;
   font-size:1.6em;
 }
-@media (min-width:1500px){
+/* Erst ab 1700px schwebt die Rangliste rechts. Die Breite wächst mit dem Bildschirm, bleibt aber so,
+   dass sie die dritte Kachel (fischbg3) nicht verdeckt. Darunter steht sie unter dem Spiel. */
+@media (min-width:1700px){
   .news{
     position:fixed;
     top:50%;
     right:10px;
     transform:translateY(-50%);
-    width:160px;
+    width:clamp(190px, calc(50vw - 660px), 230px);
     margin:0;
     z-index:50;
   }
@@ -412,18 +430,18 @@ body.meldung-an #fischen-knopf{visibility:hidden}   /* Leiste liegt im Minispiel
 }
 .rang-zeile{
   display:flex;
-  gap:8px;
-  padding:6px 12px;
+  gap:4px;
+  padding:6px 8px;
   margin:8px 0;
-  font-size:1.15em;
+  font-size:1.05em;
 }
 .rang-zeile:nth-child(3n+1){background:#ffd9b8}
 .rang-zeile:nth-child(3n+2){background:#dfe4ff}
 .rang-zeile:nth-child(3n+3){background:#fff0b8}
-.rang-platz{flex:none;width:2.4em}
-.rang-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rang-platz{flex:none;min-width:1.7em}
+.rang-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rang-gold{flex:none;display:flex;align-items:center;gap:3px;font-weight:bold}
-.rang-gold img{width:16px;height:16px;image-rendering:pixelated}
+.rang-gold img{width:14px;height:14px;image-rendering:pixelated}
 .rang-zeile.ich{outline:2px solid rgb(57, 82, 241);outline-offset:-2px;font-weight:bold}
 .rang-punkte{text-align:center;margin:0;padding:0;font-size:1.15em;line-height:.8}
 .rang-leer{padding:8px 12px;margin:0;font-size:1.1em}
@@ -561,12 +579,14 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
         </div>
         <div id="fortschritt"><div id="fuellung"></div></div>
       </div>
-      <div id="meldung"></div>
     </div>
   </div>
   <div id="steuer">
     <div id="angel-slot" title="Deine Angel"><img id="angel-img" src="angel1.png" alt="Angel" draggable="false"></div>
-    <button type="button" id="fischen-knopf" disabled>Fischen</button>
+    <div id="knopf-wrap">
+      <button type="button" id="fischen-knopf" disabled>Fischen</button>
+      <div id="meldung"></div>
+    </div>
     <div id="zaehler" title="Gold" aria-live="polite"><img id="z-gold" src="gold.png" alt="Gold" draggable="false"><span id="z-muenzen"></span></div>
   </div>
   <div id="inv-box">
@@ -619,7 +639,7 @@ const EINSTELLUNGEN = {
                              // (zur Laufzeit änderbar mit fischerTempo(2))
   FISCHER_X: 0,              // Fischer verschieben in Pixeln: + nach rechts, - nach links
   FISCHER_Y: 0,              // + nach unten, - nach oben   (zur Laufzeit: fischerBewegen(x, y))
-  KNOPF_Y: 0,               // Abstand des Fischen-Knopfs unter der Kachel (Pixel). Im Minispiel liegt die Leiste an derselben Stelle (Knopf ist dann unsichtbar)
+  KNOPF_Y: 5,               // Abstand des Fischen-Knopfs unter der Kachel (Pixel). Im Minispiel liegt die Leiste an derselben Stelle (Knopf ist dann unsichtbar)
   INV_SKALA: 2,              // Inventar-Größe relativ zur Kachel. 2 = 3x3-Inventar ist etwa so groß wie die Kachel. Größer = größere Felder
   BILD_FISCH: 'fisch.png',   // Sprite für Fische (gebraten = dasselbe Bild, nur dunkel eingefärbt)
   BRATZEIT: 15,              // Sekunden, die ein Fisch am Lagerfeuer braucht
@@ -943,6 +963,7 @@ const sndReeling = new Audio('reeling.mp3');
 sndReeling.loop = true;
 const sndDrop = new Audio('drop.mp3');
 sndDrop.volume = 0.05;
+const sndCoins = new Audio('coins.mp3');
 const sndMeer = new Audio('sea-ambience.mp3');
 sndMeer.loop = true;
 const MEER_FADE = 30;   // Sekunden, bis das Meeresrauschen die volle Lautstärke hat
@@ -1000,6 +1021,7 @@ shopBoxEl.addEventListener('click', function () {
   }
   stand.muenzen -= preis;
   stand.angel++;
+  spiele(sndCoins);
   goldBounce();
   speichern();
   anzeigen();
@@ -1055,6 +1077,7 @@ function ziehenEnde(e, abbruch) {
       const verdient = d.typ === 'g' ? E.GOLD_GEBRATEN : d.typ === 'k' ? E.GOLD_GOLDFISCH : E.GOLD_FISCH;
       stand.muenzen = Math.min(1000000, stand.muenzen + verdient);
       stand.goldGesamt = Math.min(1000000, stand.goldGesamt + verdient);   // Rangliste: Ausgeben senkt das nicht
+      spiele(sndCoins);
       goldBounce();
       verkauft = true;
     }
