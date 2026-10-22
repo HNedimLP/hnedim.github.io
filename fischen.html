@@ -206,8 +206,10 @@ body.im-spiel{touch-action:none}
 #leistenslot{
   position:absolute;
   left:50%;
-  top:calc(100% + 12px);
+  top:calc(100% + var(--knopf-y));   /* gleiche Höhe wie die Knopf-Zeile: nichts rutscht */
   width:var(--leiste-b);
+  max-width:94vw;
+  z-index:8;
   transform:translate(calc(-50% + var(--leiste-x)), var(--leiste-y));
   pointer-events:none;
 }
@@ -241,7 +243,7 @@ body.im-spiel{touch-action:none}
 }
 #fortschritt{
   height:8px;
-  margin-top:14px;
+  margin-top:4px;
   border:2px solid #222;
   border-radius:4px;
   background:#f1f1f1;
@@ -265,6 +267,15 @@ body.im-spiel{touch-action:none}
   pointer-events:none;
 }
 #meldung.an{display:flex}
+#meldung.gross{
+  inset:auto;
+  top:0;bottom:0;left:50%;
+  transform:translateX(-50%);
+  width:max-content;
+  padding:0;
+  white-space:nowrap;
+  font-size:23px;
+}
 #meldung.gut{color:rgb(26, 110, 50)}
 #meldung.schlecht{color:#c0261c}
 
@@ -286,7 +297,9 @@ body.im-spiel{touch-action:none}
   cursor:pointer;
 }
 body.im-spiel #fischen-knopf,
-body.meldung-an #fischen-knopf{visibility:hidden}   /* Platz bleibt frei: dort steht kurz die Meldung (Entkommen… usw.) bzw. liegt im Minispiel die Leiste */
+body.meldung-an #fischen-knopf{visibility:hidden}
+body.im-spiel #angel-slot,
+body.im-spiel #zaehler{visibility:hidden}   /* im Minispiel nicht nötig, Platz bleibt frei */   /* Platz bleibt frei: dort steht kurz die Meldung (Entkommen… usw.) bzw. liegt im Minispiel die Leiste */
 #fischen-knopf:hover{background:rgb(26, 100, 48)}
 #fischen-knopf:disabled{opacity:.55;cursor:default;background:rgb(40, 140, 70)}
 
@@ -527,6 +540,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 @media (max-width:600px){
   #zaehler{font-size:1.4em}
   #meldung{font-size:1.2em}
+  #meldung.gross{font-size:23px}
 }
 </style>
 </head>
@@ -657,7 +671,7 @@ const EINSTELLUNGEN = {
   LEISTE_X: 0,               // Pixel: + nach rechts, - nach links
   LEISTE_Y: 0,               // Pixel: + nach unten, - nach oben
   LEISTE_BREITE: 300,        // Pixel
-  LEISTE_HOEHE: 28,          // Pixel (der Fortschrittsstreifen darunter kommt dazu)
+  LEISTE_HOEHE: 22,          // Pixel (Balken + Fortschrittsstreifen = Höhe + 22px; bei 22 passt alles genau in die Zeile des Fischen-Knopfs, ohne etwas zu verschieben)
   ZAEHLER_Y: 130,             // Abstand des Fisch-Counters unter der Kachel (Pixel). Bei größerer Leiste erhöhen.
 
   // ---------- Schwierigkeit des Minispiels ----------
@@ -1399,7 +1413,7 @@ function spielEnde(gewonnen) {
       anzeigen();
     }
   } else {
-    zeigeMeldung('Entkommen…', 'schlecht', 1100);
+    zeigeMeldung('Entkommen…', 'schlecht gross', 1100);
   }
   setTimeout(function () {
     phase = 'bereit';
