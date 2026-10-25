@@ -1484,9 +1484,7 @@ baerEl.addEventListener('click', function (e) {
   if (!stand.kachel5 || baerPause) return;
   questUmschalten(!questOffen);
 });
-document.addEventListener('click', function (e) {
-  if (questOffen && !questEl.contains(e.target)) questUmschalten(false);
-});
+// Die Quest bleibt offen, bis man wieder auf den Bären klickt (kein Schließen mehr durch Klicks woanders)
 
 const feuerSound = new Audio('lagerfeuer.mp3');
 feuerSound.loop = true;
