@@ -121,7 +121,7 @@ body.im-spiel{touch-action:none}
 #bg2{opacity:0;transition:opacity .8s}
 #kachel2.frei #bg2{opacity:1}
 
-#freischalten, #freischalten3{
+#freischalten, #freischalten3, #freischalten4, #freischalten5{
   position:absolute;
   left:50%;
   top:50%;
@@ -136,8 +136,8 @@ body.im-spiel{touch-action:none}
   cursor:pointer;
   transition:transform .15s, opacity .5s;
 }
-#freischalten:hover, #freischalten3:hover{transform:translate(-50%,-50%) scale(1.2)}   /* wird beim Drüberfahren größer */
-#freischalten.rot, #freischalten3.rot{color:#c0261c}
+#freischalten:hover, #freischalten3:hover, #freischalten4:hover, #freischalten5:hover{transform:translate(-50%,-50%) scale(1.2)}   /* wird beim Drüberfahren größer */
+#freischalten.rot, #freischalten3.rot, #freischalten4.rot, #freischalten5.rot{color:#c0261c}
 #kachel2.frei #freischalten{opacity:0;pointer-events:none}
 
 /* ----- Kachel 3: Shop. Der Freischalten-Text erscheint erst, wenn Kachel 2 offen ist ----- */
@@ -157,6 +157,128 @@ body.im-spiel{touch-action:none}
 #kachel3.frei #shop{opacity:1;pointer-events:auto;cursor:pointer}
 #shop:hover{filter:brightness(1.12)}
 #shop.ziel{filter:brightness(1.3)}
+
+/* ----- Kachel 4 und 5: untere Reihe, mit Gold freischaltbar ----- */
+#kachel4{left:100%;top:100%}   /* genau unter Kachel 2 */
+#kachel5{left:200%;top:100%}   /* genau unter Kachel 3, rechts neben Kachel 4 */
+#bg4, #bg5{opacity:0;transition:opacity .8s}
+#kachel4.frei #bg4, #kachel5.frei #bg5{opacity:1}
+#freischalten4, #freischalten5{opacity:0;pointer-events:none}
+#kachel4.bereit #freischalten4, #kachel5.bereit #freischalten5{opacity:1;pointer-events:auto}
+#zaehler{position:relative;z-index:6}
+
+/* ----- Bär: steht mittig auf Kachel 5, erscheint nach dem Freischalten ----- */
+#baer{
+  position:absolute;
+  left:calc(50% + var(--baer-x) * var(--s) * 1px);
+  top:calc(50% + var(--baer-y) * var(--s) * 1px);
+  width:calc(45px * var(--s));   /* bear.png und bear2.png sind 45x55 */
+  transform:translate(-50%,-50%);
+  transform-origin:50% 100%;
+  image-rendering:pixelated;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .8s;
+}
+#kachel5.frei #baer{opacity:1;pointer-events:auto;cursor:pointer}
+#kachel5.frei #baer:hover{filter:brightness(1.1)}
+#baer.ziel{filter:brightness(1.3)}   /* Fisch, den er will, wird über ihn gezogen */
+#kachel5.frei #baer.pause, #kachel5.frei #baer.pause:hover{cursor:default;filter:none}   /* bear2.png: gerade keine Quest */
+#baer.pop{animation:baerPop .45s ease-out}
+@keyframes baerPop{
+  0%{transform:translate(-50%,-50%) scale(.6)}
+  50%{transform:translate(-50%,-50%) scale(1.15)}
+  75%{transform:translate(-50%,-50%) scale(.96)}
+  100%{transform:translate(-50%,-50%) scale(1)}
+}
+#baer.nein{animation:baerNein .35s ease-out}   /* Fisch, den er nicht (mehr) will */
+@keyframes baerNein{
+  0%,100%{transform:translate(-50%,-50%)}
+  20%{transform:translate(calc(-50% - 3px * var(--s)),-50%)}
+  45%{transform:translate(calc(-50% + 3px * var(--s)),-50%)}
+  70%{transform:translate(calc(-50% - 2px * var(--s)),-50%)}
+}
+
+/* Questfenster: quest.png (64x17) poppt über dem Bären auf. Darauf: Items, Pfeil, Gold nebeneinander. */
+#quest{
+  --qb:calc(64px * var(--s) * var(--quest-skala));    /* Breite des Fensters */
+  --qh:calc(17px * var(--s) * var(--quest-skala));    /* Höhe des Fensters */
+  position:absolute;
+  left:calc(50% + (var(--baer-x) + var(--quest-x)) * var(--s) * 1px);   /* folgt dem Bären (BAER_X) */
+  top:calc(50% + (var(--baer-y) + var(--quest-y)) * var(--s) * 1px - 27.5px * var(--s) - 4px);
+  width:var(--qb);
+  height:var(--qh);
+  transform:translate(-50%,-100%) scale(0);
+  transform-origin:50% 100%;
+  background:url("quest.png") center/100% 100% no-repeat;
+  image-rendering:pixelated;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:calc(var(--qh) * .1);
+  padding-bottom:calc(var(--qh) * .22);   /* Inhalt etwas höher, unten bleibt Platz für die Anzahl unter den Items */
+  box-sizing:border-box;
+  pointer-events:none;
+  z-index:7;
+}
+#quest.an{pointer-events:auto;animation:questPop .35s ease-out forwards}
+@keyframes questPop{
+  0%{transform:translate(-50%,-100%) scale(0)}
+  60%{transform:translate(-50%,-100%) scale(1.12)}
+  100%{transform:translate(-50%,-100%) scale(1)}
+}
+#quest .qitem{position:relative;width:calc(var(--qh) * .62);height:calc(var(--qh) * .62);flex:none}
+#quest .qitem img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;-webkit-user-drag:none}
+#quest .qitem img.k{filter:sepia(1) saturate(5) hue-rotate(-5deg) brightness(1.35) drop-shadow(0 0 3px #ffd34d)}
+#quest .qitem.fertig img{opacity:.4}
+#quest .qitem.fertig::after{   /* grüner Haken, wenn genug abgegeben ist */
+  content:"";
+  position:absolute;left:50%;top:50%;
+  width:28%;height:55%;
+  border:solid #2fa84f;
+  border-width:0 calc(var(--qh) * .09) calc(var(--qh) * .09) 0;
+  transform:translate(-50%,-62%) rotate(45deg);
+  filter:drop-shadow(0 0 2px #fff);
+}
+#quest .qitem.fertig .qzahl{color:#1f7a37}
+#quest .qgold.bereit{cursor:pointer;animation:goldBereit 1s ease-in-out infinite}   /* alles abgegeben: Gold wartet */
+@keyframes goldBereit{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+#quest .qzahl{
+  position:absolute;left:50%;top:100%;
+  transform:translateX(calc(-50% + var(--qh) * .08));   /* etwas nach rechts, damit die Zahl optisch mittig unter dem Sprite sitzt */
+  margin-top:calc(var(--qh) * .03);
+  font-family:"Determination","Courier New",monospace;
+  font-size:calc(var(--qh) * .24);color:#111;line-height:1;white-space:nowrap;
+}
+#quest .qpfeil{width:calc(var(--qh) * .5);height:calc(var(--qh) * .5);flex:none;image-rendering:pixelated;-webkit-user-drag:none}
+#quest .qgold{
+  display:flex;align-items:center;gap:2px;flex:none;
+  font-family:"Determination","Courier New",monospace;
+  font-size:calc(var(--qh) * .3);color:#111;white-space:nowrap;
+}
+#quest .qgold img{width:calc(var(--qh) * .3);height:calc(var(--qh) * .3);image-rendering:pixelated;-webkit-user-drag:none}
+
+/* ----- Axt: liegt mittig auf Kachel 4, erscheint nach dem Freischalten ----- */
+#axt{
+  position:absolute;
+  left:calc(50% + var(--axt-x) * var(--s) * 1px);
+  top:calc(50% + var(--axt-y) * var(--s) * 1px);
+  width:calc(24px * var(--s));   /* axt.png ist 24x31 */
+  transform:translate(-50%,-50%);
+  transform-origin:50% 90%;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .8s;
+}
+#kachel4.frei #axt{opacity:1;pointer-events:auto;cursor:pointer}
+#axt.hit{animation:axtHit .28s ease-out}   /* kurzes Wackeln nach rechts und links */
+@keyframes axtHit{
+  0%{transform:translate(-50%,-50%) rotate(0)}
+  25%{transform:translate(-50%,-50%) rotate(7deg)}
+  55%{transform:translate(-50%,-50%) rotate(-6deg)}
+  80%{transform:translate(-50%,-50%) rotate(3deg)}
+  100%{transform:translate(-50%,-50%) rotate(0)}
+}   /* der Gold-Zähler bleibt sichtbar, falls Kachel 4 daneben hineinragt */
 
 /* Kaufbox: öffnet sich links neben dem Shop und zeigt die nächste Angel mit Preis */
 #shopbox{
@@ -201,6 +323,8 @@ body.im-spiel{touch-action:none}
   transition:opacity .8s;
 }
 #kachel2.frei #feuer{opacity:1;pointer-events:auto}
+#feuer.aufleuchten{animation:feuerLeuchten .5s ease-out}   /* kurz heller, wenn die Axt getroffen hat */
+@keyframes feuerLeuchten{0%{filter:brightness(1)}20%{filter:brightness(1.9) saturate(1.4)}100%{filter:brightness(1)}}
 
 /* ----- Leiste, Meldung und Fisch-Counter (unter dem Fischer) ----- */
 #leistenslot{
@@ -232,6 +356,7 @@ body.im-spiel{touch-action:none}
   border-right:2px solid #2d8a3e;
   box-sizing:border-box;
 }
+#fischmarke.k{filter:sepia(1) saturate(5) hue-rotate(-5deg) brightness(1.35) drop-shadow(0 0 3px #ffd34d)}
 #fischmarke{
   position:absolute;
   top:50%;
@@ -280,8 +405,8 @@ body.im-spiel{touch-action:none}
 #meldung.schlecht{color:#c0261c}
 
 /* 3 Spalten: der Fischen-Knopf sitzt genau in der Mitte (unter der Kachel), Angel links und Gold rechts daneben */
-#steuer{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:18px;width:100%;margin-top:var(--knopf-y)}
-#angel-slot{justify-self:end}
+#steuer{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:10px;width:100%;margin-top:var(--knopf-y)}
+#angel-slot{justify-self:end;margin-right:8px}
 #zaehler{justify-self:start}
 #fischen-knopf{
   box-sizing:border-box;
@@ -327,16 +452,16 @@ body.im-spiel #zaehler{visibility:hidden}   /* im Minispiel nicht nötig, Platz 
 #zaehler{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:4px;
   font-family:"Determination","Courier New",monospace;
-  font-size:1.7em;
+  font-size:1.15em;   /* klein genug, damit auch 3 Stellen noch links von der nächsten Kachel Platz haben */
   color:#111;
   white-space:nowrap;
 }
 
 #z-gold{
-  width:calc(16px * var(--s));
-  height:calc(16px * var(--s));
+  width:calc(11px * var(--s));
+  height:calc(11px * var(--s));
   image-rendering:pixelated;
   -webkit-user-drag:none;
 }
@@ -448,14 +573,19 @@ body.im-spiel #zaehler{visibility:hidden}   /* im Minispiel nicht nötig, Platz 
   margin:8px 0;
   font-size:1.05em;
 }
-.rang-zeile:nth-child(3n+1){background:#ffd9b8}
-.rang-zeile:nth-child(3n+2){background:#dfe4ff}
-.rang-zeile:nth-child(3n+3){background:#fff0b8}
+/* Alle Zeilen blau, nur Platz 1 bis 3 in Gold, Silber und Bronze */
+.rang-zeile{background:#dfe4ff}
+.rang-zeile.platz1{background:#ffe37a}
+.rang-zeile.platz2{background:#dde2ea}
+.rang-zeile.platz3{background:#eab98a}
 .rang-platz{flex:none;min-width:1.7em}
 .rang-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Medaillen-Namen: Farbe mit dunklem Rand, damit sie auf allen Zeilenfarben lesbar bleiben */
+.rang-name.med-gold{color:#ffc400;font-weight:bold;text-shadow:-1px 0 #5a4300,1px 0 #5a4300,0 -1px #5a4300,0 1px #5a4300}
+.rang-name.med-silber{color:#e3e8f0;font-weight:bold;text-shadow:-1px 0 #3d4655,1px 0 #3d4655,0 -1px #3d4655,0 1px #3d4655}
+.rang-name.med-bronze{color:#d9803a;font-weight:bold;text-shadow:-1px 0 #4a2606,1px 0 #4a2606,0 -1px #4a2606,0 1px #4a2606}
 .rang-gold{flex:none;display:flex;align-items:center;gap:3px;font-weight:bold}
 .rang-gold img{width:14px;height:14px;image-rendering:pixelated}
-.rang-zeile.ich{outline:2px solid rgb(57, 82, 241);outline-offset:-2px;font-weight:bold}
 .rang-punkte{text-align:center;margin:0;padding:0;font-size:1.15em;line-height:.8}
 .rang-leer{padding:8px 12px;margin:0;font-size:1.1em}
 .rang-fuss{
@@ -538,7 +668,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 
 /* ===== Handy: kleinere Fische-Anzeige ===== */
 @media (max-width:600px){
-  #zaehler{font-size:1.4em}
+  #zaehler{font-size:1.1em}
   #meldung{font-size:1.2em}
   #meldung.gross{font-size:23px}
 }
@@ -582,6 +712,21 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
       <div class="slot" id="shopbox" title="Angel kaufen">
         <div id="shop-preis"><img src="gold.png" alt="Gold" draggable="false"><span id="shop-preis-zahl"></span></div>
       </div>
+    </div>
+
+    <!-- Kachel 4: genau unter Kachel 2, wird mit Gold freigeschaltet -->
+    <div class="kachel" id="kachel4">
+      <img class="bg" id="bg4" src="fischbg4.png" alt="" draggable="false">
+      <div id="freischalten4" role="button" tabindex="0"></div>
+      <img id="axt" src="Axt.png" alt="Axt" title="Klick mich" draggable="false">
+    </div>
+
+    <!-- Kachel 5: genau unter Kachel 3 (rechts neben Kachel 4), wird mit Gold freigeschaltet -->
+    <div class="kachel" id="kachel5">
+      <img class="bg" id="bg5" src="fischbg5.png" alt="" draggable="false">
+      <div id="freischalten5" role="button" tabindex="0"></div>
+      <img id="baer" src="bear.png" alt="Bär" draggable="false">
+      <div id="quest" aria-live="polite"></div>
     </div>
 
     <!-- Unter dem Fischer: Leiste (nur im Minispiel), Meldung, Fisch-Counter -->
@@ -645,6 +790,8 @@ const EINSTELLUNGEN = {
   // ---------- Ablauf ----------
   KOSTEN_KACHEL_2: 2,        // so viele Fische kostet fischbg2
   KOSTEN_KACHEL_3: 3,        // so viele GEBRATENE Fische kostet fischbg3 (mit dem Shop)
+  KOSTEN_KACHEL_4: 25,       // so viel GOLD kostet fischbg4 (liegt unter fischbg2)
+  KOSTEN_KACHEL_5: 50,       // so viel GOLD kostet fischbg5 (liegt unter fischbg3, rechts neben fischbg4)
   KAUF_ZIEHT_FISCHE_AB: true,// true = die Fische sind weg (gekauft), false = nur Mindestzahl nötig
                              // Die Rangliste zählt das komplette verdiente Gold (auch ausgegebenes), keine Fische.
 
@@ -655,8 +802,23 @@ const EINSTELLUNGEN = {
   FISCHER_Y: 0,              // + nach unten, - nach oben   (zur Laufzeit: fischerBewegen(x, y))
   KNOPF_Y: 5,               // Abstand des Fischen-Knopfs unter der Kachel (Pixel). Im Minispiel liegt die Leiste an derselben Stelle (Knopf ist dann unsichtbar)
   INV_SKALA: 2,              // Inventar-Größe relativ zur Kachel. 2 = 3x3-Inventar ist etwa so groß wie die Kachel. Größer = größere Felder
-  BILD_FISCH: 'fisch.png',   // Sprite für Fische (gebraten = dasselbe Bild, nur dunkel eingefärbt)
   BRATZEIT: 15,              // Sekunden, die ein Fisch am Lagerfeuer braucht
+  AXT_BRATZEIT: 5,           // Sekunden, die ein Fisch braucht, solange die Axt wirkt
+  AXT_LEUCHT_VERZOEGERUNG: 0.5,   // Sekunden nach dem Axt-Klick, bis das Lagerfeuer aufleuchtet
+  AXT_DAUER: 30,             // So viele Sekunden wirkt ein Klick auf die Axt (jeder neue Klick startet die Zeit von vorne)
+  AXT_X: -28,                  // Axt auf Kachel 4 verschieben (Pixelart-Pixel): + nach rechts, - nach links. Standard: mittig
+  AXT_Y: 18,                  // + nach unten, - nach oben
+  BAER_X: -17,                 // Bär auf Kachel 5 verschieben (Pixelart-Pixel): + nach rechts, - nach links. Standard: mittig
+  BAER_Y: 24,                 // + nach unten, - nach oben
+  QUEST_PAUSE: 60,           // Sekunden, die der Bär nach einer abgeschlossenen Quest (bear2.png) schläft, bis er eine neue Quest hat
+  QUEST_MAX_PRO_SORTE: 3,    // Der Bär will höchstens so viele Fische einer Sorte
+  QUEST_SORTEN_2_CHANCE: 50, // Chance in Prozent, dass die Quest 2 Sorten verlangt (sonst 1). Es gibt nie mehr als 2 (2 Felder im Questfenster)
+  QUEST_MIN_ANTEIL: 7,       // Der Bär verlangt nur Fische, die an deiner Angel mindestens diesen Anteil (in Prozent) aller Fänge ausmachen. Seltene Fische (z. B. der Aal bei Angel 2) kommen dann noch nicht vor
+  QUEST_GOLD_FAKTOR: 2.5,    // Questgold = Rohwert der verlangten Fische mal diese Zahl ...
+  QUEST_GOLD_ZUFALL: 0.25,   // ... und dann zufällig um bis zu diese Zahl (0.25 = 25 %) nach oben oder unten verschoben
+  QUEST_SKALA: 1.5,            // Größe des Questfensters (quest.png ist 64x17). 2 = doppelt so groß wie die Pixelart-Skalierung, ganze Zahlen bleiben scharf
+  QUEST_X: 0,                // Questfenster verschieben (Pixelart-Pixel): + nach rechts, - nach links
+  QUEST_Y: -8,                // + nach unten, - nach oben. Standard: direkt über dem Bären
   OFEN_X: 0,                 // Ofen-Fenster verschieben (Pixel). Standard: mittig über dem Lagerfeuer
   OFEN_Y: 0,                 // + nach unten, - nach oben. Standard: direkt über dem Lagerfeuer
   OFEN_SKALA: 0.75,          // Größe des Ofen-Fensters (1 = normal)
@@ -678,8 +840,10 @@ const EINSTELLUNGEN = {
   // Diese Werte gelten je Angel: Stelle 1 = angel1, ... Stelle 5 = angel5.
   ANGEL_WARTEZEIT_MIN: [5, 4, 3, 2, 1.5],        // Sekunden bis der Fisch frühestens anbeißt
   ANGEL_WARTEZEIT_MAX: [20, 16, 12, 9, 6],       // Sekunden bis der Fisch spätestens anbeißt
-  ANGEL_ZONE: [0.22, 0.27, 0.32, 0.37, 0.42],    // Größe der grünen Fangzone (0.22 = 22 % der Leiste). Größer = leichter.
-  ANGEL_FUELL_TEMPO: [0.35, 0.42, 0.50, 0.58, 0.66],   // Fortschritt pro Sekunde, wenn der Fisch in der Zone ist
+  // Balancing v0.3: Die Angeln werden nur noch in kleinen Schritten leichter (angel5: 35 % statt 42 % grün),
+  // weil die besseren Angeln jetzt schon durch die neuen Fische mehr bringen.
+  ANGEL_ZONE: [0.22, 0.25, 0.28, 0.31, 0.35],    // Größe der grünen Fangzone (0.22 = 22 % der Leiste). Größer = leichter.
+  ANGEL_FUELL_TEMPO: [0.35, 0.39, 0.43, 0.47, 0.51],   // Fortschritt pro Sekunde, wenn der Fisch in der Zone ist
   ZONE_BESCHLEUNIGUNG: 2.6,  // Wie stark die Zone beim Halten nach rechts bzw. beim Loslassen nach links zieht
   ZONE_REIBUNG: 0.965,       // Näher an 1 = rutscht mehr nach, kleiner = bremst schneller
   FISCH_TEMPO: 0.6,          // Wie schnell der Fisch durch die Leiste flitzt. Größer = schwerer.
@@ -687,20 +851,48 @@ const EINSTELLUNGEN = {
   START_FORTSCHRITT: 0.3,    // Startwert des Fortschritts (0 bis 1)
   MAX_DAUER: 30,             // Sekunden, dann entkommt der Fisch sicher
 
+  // ---------- Schwierigkeit der Fische (Stufe 1 bis 5) ----------
+  // Die Schwierigkeit eines Fisches bestimmt, wie hektisch er durch die Leiste schwimmt.
+  // Stufe 3 = genau so wie das Spiel bisher war. Stufe 1 ist viel leichter, Stufe 5 etwas schwerer.
+  // Stelle 1 = Stufe 1, ... Stelle 5 = Stufe 5.
+  SCHWIERIGKEIT_TEMPO:   [0.45, 0.70, 1.00, 1.20, 1.40],   // Schwimmtempo (Faktor auf FISCH_TEMPO). Größer = schneller
+  SCHWIERIGKEIT_WECHSEL: [1.60, 1.25, 1.00, 0.85, 0.70],   // Wie lange er bei einem Ziel bleibt (Faktor). Kleiner = wechselt öfter die Richtung
+  TEST_SCHWIERIGKEIT: 0,     // Zum Ausprobieren: 0 = aus, 1 bis 5 = JEDER Fisch hat diese Stufe. Danach wieder auf 0 stellen!
+
   // ---------- Lagerfeuer auf Kachel 2 ----------
   // Angaben in Pixelart-Pixeln der 128er-Kachel (werden automatisch mit der Skalierung malgenommen).
   FEUER_X: 44,               // Abstand von links in der Kachel
   FEUER_Y: 64,               // Abstand von oben in der Kachel
   FEUER_BREITE: 40,          // Breite des Lagerfeuers
 
-  // ---------- Gold ----------
-  GOLD_FISCH: 2,             // Gold für einen normalen Fisch (auf den Shop ziehen)
-  GOLD_GEBRATEN: 3,          // Gold für einen gebratenen Fisch
-  GOLD_GOLDFISCH: 20,        // Gold für einen goldenen Fisch (kann nicht gebraten werden)
-  ANGEL_GOLDFISCH_CHANCE: [100, 80, 50, 25, 10],   // Chance auf einen goldenen Fisch je Angel: 1 zu ...
+  // ---------- Fische ----------
+  // Je Fischart: Bild (32x32), Gold roh / gebraten (auf den Shop ziehen) und Schwierigkeit (1 bis 5, siehe oben).
+  // Gebraten wird derselbe Sprite dunkel eingefärbt. Buchstaben: f = Fisch, b = Barsch, w = Wels, n = Nemo,
+  // d = Dori, a = Aal, k = goldener Fisch (kann nicht gebraten werden, kommt vorerst mit dem fisch.png-Sprite).
+  FISCHE: {
+    f: { name: 'Fisch',          bild: 'fisch.png',  roh: 2,  gebraten: 3, stufe: 1 },
+    b: { name: 'Barsch',         bild: 'barsch.png', roh: 3,  gebraten: 4, stufe: 2 },
+    w: { name: 'Wels',           bild: 'wels.png',   roh: 4,  gebraten: 5, stufe: 3 },
+    n: { name: 'Nemo',           bild: 'nemo.png',   roh: 5,  gebraten: 6, stufe: 4 },
+    d: { name: 'Dori',           bild: 'dori.png',   roh: 5,  gebraten: 6, stufe: 4 },
+    a: { name: 'Aal',            bild: 'aal.png',    roh: 7,  gebraten: 8, stufe: 5 },
+    k: { name: 'Goldener Fisch', bild: 'fisch.png',  roh: 25, gebraten: 0, stufe: 3 }
+  },
+  STAPEL_MAX: 64,            // So viele Fische derselben Art passen auf ein Inventarfeld
+  GOLDFISCH_CHANCE: 1,       // Chance in Prozent auf einen goldenen Fisch, bei jeder Angel gleich
+  // Welcher Fisch beißt an? Je Angel eine Gewichtung (Stelle 1 = angel1, ... Stelle 5 = angel5).
+  // Die Zahlen sind Verhältnisse: bei angel1 ist ein Barsch 0,3-mal so wahrscheinlich wie ein Fisch.
+  // Fehlt eine Fischart in der Liste, beißt sie an dieser Angel nicht an.
+  ANGEL_CHANCEN: [
+    { f: 100, b: 30,  w: 10 },
+    { f: 100, b: 45,  w: 25, n: 10, d: 10, a: 5 },
+    { f: 100, b: 70,  w: 40, n: 40, d: 40, a: 20 },
+    { f: 100, b: 90,  w: 60, n: 60, d: 60, a: 40 },
+    { f: 80,  b: 100, w: 80, n: 70, d: 70, a: 60 }
+  ],
 
   // ---------- Angeln (angel1.png ... angel5.png) ----------
-  ANGEL_PREISE: [10, 25, 50, 100],   // Gold für angel2, angel3, angel4, angel5 (angel1 hat jeder von Anfang an)
+  ANGEL_PREISE: [10, 100, 300, 500],   // Gold für angel2, angel3, angel4, angel5 (angel1 hat jeder von Anfang an)
 
   // ---------- Shop auf Kachel 3 ----------
   // Angaben in Pixelart-Pixeln der 128er-Kachel (shop.png ist 50x50). Standard: mittig.
@@ -713,8 +905,20 @@ const EINSTELLUNGEN = {
   UMSCHALT_BREITE: 800,      // darunter gilt SKALA_KLEIN
 
   // ---------- Rangliste ----------
-  START_MAX: 200             // So viel schon verdientes Gold wird beim Eintragen sofort übernommen. MUSS zu firestore.rules passen!
+  START_MAX: 200,            // So viel schon verdientes Gold wird beim Eintragen sofort übernommen. MUSS zu firestore.rules passen!
                              // Der Rest wird danach automatisch nachgetragen.
+  // Namen in der Rangliste einfärben: UID des Spielers (Firebase Console -> Authentication -> "User UID",
+  // ist auch die Dokument-ID in "rangliste") und Farbe. Beispiel:  'ABC123uid': '#d4145a'
+  // Das steht nur hier im Code, nicht in Firebase, damit sich niemand selbst färben kann.
+  NAMENSFARBEN: {
+  },
+  // Je ein Spieler in Gold, Silber und Bronze (UID eintragen, '' = niemand). Die Medaille hat Vorrang vor NAMENSFARBEN.
+  // Die Farben selbst stehen im CSS bei .med-gold / .med-silber / .med-bronze.
+  MEDAILLEN: {
+    gold: '',
+    silber: '',
+    bronze: ''
+  }
 };
 const E = EINSTELLUNGEN;
 
@@ -736,6 +940,13 @@ rootStil.setProperty('--ofen-x', E.OFEN_X + 'px');
 rootStil.setProperty('--ofen-y', E.OFEN_Y + 'px');
 rootStil.setProperty('--ofen-skala', E.OFEN_SKALA);
 rootStil.setProperty('--shop-x', E.SHOP_X);
+rootStil.setProperty('--axt-x', E.AXT_X);
+rootStil.setProperty('--axt-y', E.AXT_Y);
+rootStil.setProperty('--baer-x', E.BAER_X);
+rootStil.setProperty('--baer-y', E.BAER_Y);
+rootStil.setProperty('--quest-skala', E.QUEST_SKALA);
+rootStil.setProperty('--quest-x', E.QUEST_X);
+rootStil.setProperty('--quest-y', E.QUEST_Y);
 rootStil.setProperty('--shop-y', E.SHOP_Y);
 
 function skalaSetzen() {
@@ -755,6 +966,10 @@ const kachel2 = $('kachel2');
 const freiEl = $('freischalten');
 const kachel3 = $('kachel3');
 const frei3El = $('freischalten3');
+const kachel4 = $('kachel4');
+const frei4El = $('freischalten4');
+const kachel5 = $('kachel5');
+const frei5El = $('freischalten5');
 const zMuenzenEl = $('z-muenzen');
 const zGoldEl = $('z-gold');
 const shopEl = $('shop');
@@ -777,20 +992,33 @@ const pfeilFuell = $('pfeil-fuell');
 
 // ---------------------------------------------------------------------
 //  Spielstand
-//  inv        = 9 Felder: '' (leer), 'f' (Fisch), 'g' (gebratener Fisch), 'k' (goldener Fisch)
+//  inv        = 9 Felder: '' (leer), 'b' (1 Stück) oder 'b:12' (12 Stück). Kleinbuchstabe = roher Fisch (f b w n d a, k = goldener),
+//               GROSSBUCHSTABE = gebraten (F B W N D A). Pro Feld höchstens STAPEL_MAX Stück.
 //  muenzen    = Gold (gibt es für Fische, die man auf den Shop auf Kachel 3 zieht)
 //  goldGesamt = alles je verdiente Gold, auch ausgegebenes (nur das zählt für die Rangliste)
 //  kachel2    = freigeschaltet?
 //  kachel3    = Shop-Kachel freigeschaltet?
+//  kachel4 / kachel5 = untere Reihe freigeschaltet? (mit Gold gekauft)
 //  angel      = Stufe der Angel (1 bis 5), jeder startet mit 1
-//  ofenRoh / ofenFertig = Fische im Ofen (roh / fertig zum Einsammeln)
+//  ofenRoh / ofenFertig = Listen mit den Fischen im Ofen (roh / fertig zum Einsammeln)
 //  Ohne Anmeldung liegt der Stand im Browser (localStorage). Mit Anmeldung wird er in
 //  Firebase (Sammlung "spielstand") gespeichert. Beim Abmelden geht alles auf Level 0.
 // ---------------------------------------------------------------------
 const SPEICHER = 'fischen_stand_v2';
 const SLOTS = 9;   // 3x3 Inventar. MUSS zu firestore.rules passen (inv.size())
+const OFEN_MAX = 25;   // so viele Fische passen höchstens in den Ofen (roh + fertig). MUSS zu firestore.rules passen
 function leerStand() {
-  return { inv: new Array(SLOTS).fill(''), muenzen: 0, goldGesamt: 0, kachel2: false, kachel3: false, angel: 1, ofenRoh: 0, ofenFertig: 0 };
+  return { inv: new Array(SLOTS).fill(''), muenzen: 0, goldGesamt: 0, kachel2: false, kachel3: false, kachel4: false, kachel5: false, angel: 1, ofenRoh: [], ofenFertig: [] };
+}
+// Fisch-Hilfen: Kleinbuchstabe = roh, GROSSBUCHSTABE = gebraten ('k' goldener Fisch gibt es nur roh)
+function gueltigerTyp(t) { return typeof t === 'string' && t.length === 1 && t !== 'K' && !!E.FISCHE[t.toLowerCase()]; }
+function istGebraten(t) { return !!t && t === t.toUpperCase(); }
+function istRoh(t) { return !!t && t !== 'k' && t === t.toLowerCase(); }
+function art(t) { return E.FISCHE[t.toLowerCase()]; }
+function typKlasse(t) { return istGebraten(t) ? ' g' : t === 'k' ? ' k' : ''; }
+function ofenListe(v, roh) {   // alte Stände hatten nur eine Zahl (= normale Fische), neue haben eine Liste
+  if (Array.isArray(v)) return v.filter(function (x) { return gueltigerTyp(x) && (roh ? istRoh(x) : istGebraten(x)); }).slice(0, OFEN_MAX);
+  return new Array(zahl(v, SLOTS)).fill(roh ? 'f' : 'F');
 }
 function zahl(v, max) { return Math.min(max, Math.max(0, parseInt(v, 10) || 0)); }
 function standNormalisieren(o) {
@@ -798,15 +1026,22 @@ function standNormalisieren(o) {
   if (!o) return s;
   if (Array.isArray(o.inv)) {   // auch alte 5x5-Stände: Fische der Reihe nach in die 9 Felder
     let k = 0;
-    o.inv.forEach(function (x) { if ((x === 'f' || x === 'g' || x === 'k') && k < SLOTS) s.inv[k++] = x; });
+    o.inv.forEach(function (x) {
+      if (typeof x !== 'string' || !x) return;
+      let t = x.charAt(0);
+      if (t === 'g') t = 'F';   // altes 'g' = gebratener Fisch
+      if (gueltigerTyp(t) && k < SLOTS) s.inv[k++] = platzBauen(t, Math.min(E.STAPEL_MAX, platzAnz(x)));
+    });
   }
   s.muenzen = zahl(o.muenzen, 1000000);
   s.goldGesamt = Math.max(zahl(o.goldGesamt, 1000000), s.muenzen);
   s.kachel2 = !!o.kachel2;
   s.kachel3 = !!o.kachel3 && s.kachel2;
+  s.kachel4 = !!o.kachel4 && s.kachel3;
+  s.kachel5 = !!o.kachel5 && s.kachel3;
   s.angel = Math.min(5, Math.max(1, parseInt(o.angel, 10) || 1));
-  s.ofenRoh = zahl(o.ofenRoh, SLOTS);
-  s.ofenFertig = zahl(o.ofenFertig, SLOTS);
+  s.ofenRoh = ofenListe(o.ofenRoh, true);
+  s.ofenFertig = ofenListe(o.ofenFertig, false);
   return s;
 }
 let stand = leerStand();   // Seite neu laden = Level 0. Gespeichert wird nur mit Konto (Firebase).
@@ -814,8 +1049,50 @@ try { localStorage.removeItem('fischen_stand_v1'); localStorage.removeItem('fisc
 function lokalSpeichern() {}
 function speichern() { lokalSpeichern(); cloudPlanen(); }
 
-function anzahl(typ) { return stand.inv.filter(function (x) { return x === typ; }).length; }
-function freierSlot() { return stand.inv.indexOf(''); }
+// ----- Stapel: ein Inventarfeld hält bis zu STAPEL_MAX Fische derselben Art -----
+function platzTyp(v) { return v ? v.charAt(0) : ''; }
+function platzAnz(v) { return v ? (v.length > 1 ? parseInt(v.slice(2), 10) || 1 : 1) : 0; }
+function platzBauen(t, n) { return n <= 0 ? '' : (n === 1 ? t : t + ':' + n); }
+function anzahl(typ) {
+  let summe = 0;
+  stand.inv.forEach(function (v) { if (platzTyp(v) === typ) summe += platzAnz(v); });
+  return summe;
+}
+function entfernen(typ, n) {
+  for (let i = 0; i < SLOTS && n > 0; i++) {
+    if (platzTyp(stand.inv[i]) !== typ) continue;
+    const a = platzAnz(stand.inv[i]);
+    const nimm = Math.min(n, a);
+    stand.inv[i] = platzBauen(typ, a - nimm);
+    n -= nimm;
+  }
+}
+// Legt n Stück ins Inventar: erst auf angefangene Stapel, dann in leere Felder. Gibt zurück, wie viele nicht mehr gepasst haben.
+function hinzufuegen(typ, n) {
+  for (let i = 0; i < SLOTS && n > 0; i++) {
+    if (platzTyp(stand.inv[i]) !== typ) continue;
+    const a = platzAnz(stand.inv[i]);
+    const dazu = Math.min(n, E.STAPEL_MAX - a);
+    if (dazu > 0) { stand.inv[i] = platzBauen(typ, a + dazu); n -= dazu; neuSlot = i; }
+  }
+  for (let i = 0; i < SLOTS && n > 0; i++) {
+    if (stand.inv[i]) continue;
+    const dazu = Math.min(n, E.STAPEL_MAX);
+    stand.inv[i] = platzBauen(typ, dazu);
+    n -= dazu;
+    neuSlot = i;
+  }
+  return n;
+}
+function platzFuer(typ) {   // passt mindestens 1 Stück dieser Art noch rein?
+  return stand.inv.some(function (v) { return !v || (platzTyp(v) === typ && platzAnz(v) < E.STAPEL_MAX); });
+}
+function inventarVoll() {   // kein leeres Feld und kein Stapel mit Platz
+  return !stand.inv.some(function (v) { return !v || platzAnz(v) < E.STAPEL_MAX; });
+}
+function ausListe(liste, typ, n) {   // nimmt n Stück einer Art aus einer Ofen-Liste
+  for (let i = liste.length - 1; i >= 0 && n > 0; i--) if (liste[i] === typ) { liste.splice(i, 1); n--; }
+}
 function fischText(n) { return n + (n === 1 ? ' Fisch' : ' Fische'); }
 function gebrFischText(n) { return n + (n === 1 ? ' gebratener Fisch' : ' gebratene Fische'); }
 
@@ -833,8 +1110,8 @@ for (let i = 0; i < SLOTS; i++) {
 
 function itemEl(typ) {
   const sp = document.createElement('img');
-  sp.className = 'item' + (typ === 'g' ? ' g' : typ === 'k' ? ' k' : '');
-  sp.src = E.BILD_FISCH;
+  sp.className = 'item' + typKlasse(typ);
+  sp.src = art(typ).bild;
   sp.draggable = false;
   return sp;
 }
@@ -878,9 +1155,13 @@ function anzeigen() {
   kachel2.classList.toggle('frei', stand.kachel2);
   kachel3.classList.toggle('frei', stand.kachel3);
   kachel3.classList.toggle('bereit', stand.kachel2 && !stand.kachel3);
+  kachel4.classList.toggle('frei', stand.kachel4);
+  kachel5.classList.toggle('frei', stand.kachel5);
+  kachel4.classList.toggle('bereit', stand.kachel3 && !stand.kachel4);
+  kachel5.classList.toggle('bereit', stand.kachel3 && !stand.kachel5);
   for (let i = 0; i < SLOTS; i++) {
-    if (drag && drag.i === i) continue;
-    slotFuellen(slotEls[i], stand.inv[i], stand.inv[i] ? 1 : 0);
+    if (drag && drag.quelle === 'inv' && drag.i === i) continue;
+    slotFuellen(slotEls[i], platzTyp(stand.inv[i]), platzAnz(stand.inv[i]));
     if (neuSlot === i && slotEls[i].firstChild) { slotEls[i].firstChild.classList.add('bounce'); neuSlot = -1; }
   }
   shopBoxZeichnen();
@@ -891,18 +1172,25 @@ function anzeigen() {
     void angelImgEl.offsetWidth;   // Animation neu starten
     angelImgEl.classList.add('bounce');
   }
-  slotFuellen(ofenIn, 'f', stand.ofenRoh);
-  slotFuellen(ofenOut, 'g', stand.ofenFertig);
-  ofenEl.classList.toggle('an', stand.kachel2 && (stand.ofenRoh > 0 || stand.ofenFertig > 0));
+  ofenSlot(ofenIn, stand.ofenRoh);
+  ofenSlot(ofenOut, stand.ofenFertig);
+  ofenEl.classList.toggle('an', stand.kachel2 && (stand.ofenRoh.length > 0 || stand.ofenFertig.length > 0));
+}
+function ofenSlot(el, liste) {   // zeigt den vordersten Fisch, die Zahl zählt Fische derselben Art
+  const t = liste[0];
+  slotFuellen(el, t || '', t ? liste.filter(function (x) { return x === t; }).length : 0);
 }
 freiEl.textContent = 'Freischalten:\n' + fischText(E.KOSTEN_KACHEL_2);
 frei3El.textContent = 'Freischalten:\n' + gebrFischText(E.KOSTEN_KACHEL_3);
+frei4El.textContent = 'Freischalten:\n' + E.KOSTEN_KACHEL_4 + ' Gold';
+frei5El.textContent = 'Freischalten:\n' + E.KOSTEN_KACHEL_5 + ' Gold';
 
 function zuruecksetzen() {   // zurück auf Level 0 (beim Abmelden)
   shopOffen = false;
   clearTimeout(cloudTimer);
   stand = leerStand();
   ofenFortschritt = 0;
+  axtEnde = 0;
   ofenPfeil();
   try { localStorage.removeItem(SPEICHER); } catch (e) {}
   feuerSound.pause();
@@ -924,8 +1212,7 @@ function kaufen() {
     return;
   }
   if (E.KAUF_ZIEHT_FISCHE_AB) {
-    let n = E.KOSTEN_KACHEL_2;
-    for (let i = 0; i < SLOTS && n > 0; i++) if (stand.inv[i] === 'f') { stand.inv[i] = ''; n--; }
+    entfernen('f', E.KOSTEN_KACHEL_2);
   }
   stand.kachel2 = true;
   spiele(feuerSound);   // Lagerfeuer-Sound startet direkt beim Freischalten
@@ -934,10 +1221,40 @@ function kaufen() {
 }
 freiEl.addEventListener('click', kaufen);
 
+// Kachel 4 und 5 kaufen: mit Gold. Beide erscheinen, sobald Kachel 3 freigeschaltet ist (Reihenfolge egal).
+function kaufenGold(nr) {
+  const key = 'kachel' + nr;
+  const preis = E['KOSTEN_KACHEL_' + nr];
+  const el = nr === 4 ? frei4El : frei5El;
+  if (stand[key]) return;
+  if (!stand.kachel3) return;
+  if (stand.muenzen < preis) {
+    el.textContent = 'Zu wenig Gold!';
+    el.classList.add('rot');
+    setTimeout(function () {
+      el.textContent = 'Freischalten:\n' + preis + ' Gold';
+      el.classList.remove('rot');
+    }, 1200);
+    return;
+  }
+  stand.muenzen -= preis;   // goldGesamt (Rangliste) bleibt, Ausgeben senkt es nicht
+  stand[key] = true;
+  spiele(sndCoins);
+  goldBounce();
+  speichern();
+  anzeigen();
+}
+[[frei4El, 4], [frei5El, 5]].forEach(function (p) {
+  p[0].addEventListener('click', function () { kaufenGold(p[1]); });
+  p[0].addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); kaufenGold(p[1]); }
+  });
+});
+
 // Kachel 3 (Shop) kaufen: mit gebratenen Fischen aus dem Inventar
 function kaufen3() {
   if (stand.kachel3 || !stand.kachel2) return;
-  if (anzahl('g') < E.KOSTEN_KACHEL_3) {
+  if (anzahl('F') < E.KOSTEN_KACHEL_3) {
     frei3El.textContent = 'Zu wenig gebratene Fische!';
     frei3El.classList.add('rot');
     setTimeout(function () {
@@ -947,8 +1264,7 @@ function kaufen3() {
     return;
   }
   if (E.KAUF_ZIEHT_FISCHE_AB) {
-    let n = E.KOSTEN_KACHEL_3;
-    for (let i = 0; i < SLOTS && n > 0; i++) if (stand.inv[i] === 'g') { stand.inv[i] = ''; n--; }
+    entfernen('F', E.KOSTEN_KACHEL_3);
   }
   stand.kachel3 = true;
   speichern();
@@ -994,6 +1310,160 @@ function meerStarten() {
     if (f >= 1) clearInterval(meerFade);
   }, 100);
 }
+// ---------------------------------------------------------------------
+//  Axt (liegt auf Kachel 4): Klick = Lagerfeuer brät AXT_DAUER Sekunden lang schneller.
+//  Die Zeit wird nicht in Firebase gespeichert.
+// ---------------------------------------------------------------------
+const axtEl = $('axt');
+const sndAxt = new Audio('axt-hit.mp3');
+let axtEnde = 0;   // Zeitpunkt (ms), bis zu dem die Axt wirkt
+let feuerLeuchtTimer = null;
+function axtAktiv() { return Date.now() < axtEnde; }
+function neuAnimieren(el, klasse) { el.classList.remove(klasse); void el.offsetWidth; el.classList.add(klasse); }
+axtEl.addEventListener('click', function () {
+  axtEnde = Date.now() + E.AXT_DAUER * 1000;   // jederzeit klickbar, startet die Zeit von vorne
+  spiele(sndAxt);
+  neuAnimieren(axtEl, 'hit');          // Wackeln
+  // Das Lagerfeuer leuchtet erst nach dem Treffer auf (AXT_LEUCHT_VERZOEGERUNG Sekunden nach dem Klick)
+  clearTimeout(feuerLeuchtTimer);
+  feuerLeuchtTimer = setTimeout(function () { neuAnimieren(feuerEl, 'aufleuchten'); }, E.AXT_LEUCHT_VERZOEGERUNG * 1000);
+});
+
+// ---------------------------------------------------------------------
+//  Bär (steht auf Kachel 5): Klick = Questfenster auf/zu. Die Quest wird nicht in Firebase gespeichert.
+//  Eine Quest hat bis zu 2 Fischsorten (items: [{ t: Fischbuchstabe, n: Anzahl }]) und Gold.
+// ---------------------------------------------------------------------
+const baerEl = $('baer');
+const questEl = $('quest');
+let questOffen = false;
+let quest = null;
+let baerPause = false;   // true = Quest abgeschlossen, der Bär ist bear2.png und schläft (QUEST_PAUSE Sekunden)
+new Image().src = 'bear2.png';   // vorladen, damit der Wechsel ohne Ruckeln klappt
+function zufallGanz(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }   // ganze Zahl von a bis b
+// Neue Zufalls-Quest: nur rohe Fische, die die aktuelle Angel fangen kann. Der goldene Fisch ist nie dabei (zu selten).
+function questNeu() {
+  // Anteil jeder Fischart an allen Fängen dieser Angel (ohne goldenen Fisch)
+  const chancen = E.ANGEL_CHANCEN[stand.angel - 1];
+  let summe = 0;
+  Object.keys(chancen).forEach(function (t) { if (t !== 'k' && E.FISCHE[t]) summe += chancen[t]; });
+  let moegliche = Object.keys(chancen).filter(function (t) { return t !== 'k' && E.FISCHE[t]; }).map(function (t) {
+    return { t: t, anteil: chancen[t] / summe * 100 };
+  }).filter(function (m) { return m.anteil >= E.QUEST_MIN_ANTEIL; });
+  if (moegliche.length === 0) moegliche = [{ t: 'f', anteil: 100 }];
+  const sorten = Math.min(moegliche.length, Math.random() * 100 < E.QUEST_SORTEN_2_CHANCE ? 2 : 1);
+  const items = [];
+  let wert = 0;
+  for (let k = 0; k < sorten; k++) {
+    // Sorte würfeln: häufige Fische kommen öfter dran als seltene
+    let r = Math.random() * moegliche.reduce(function (a, m) { return a + m.anteil; }, 0);
+    let idx = 0;
+    while (idx < moegliche.length - 1 && r >= moegliche[idx].anteil) { r -= moegliche[idx].anteil; idx++; }
+    const m = moegliche.splice(idx, 1)[0];
+    // Seltenere Fische werden nur in kleinen Mengen verlangt (ab 20 % Anteil bis zum Maximum, ab 10 % höchstens 2, sonst 1)
+    const max = Math.min(E.QUEST_MAX_PRO_SORTE, m.anteil >= 20 ? 3 : m.anteil >= 10 ? 2 : 1);
+    const n = zufallGanz(1, max);
+    items.push({ t: m.t, n: n, ab: 0 });   // ab = schon abgegeben
+    wert += n * art(m.t).roh;
+  }
+  const faktor = E.QUEST_GOLD_FAKTOR * (1 + (Math.random() * 2 - 1) * E.QUEST_GOLD_ZUFALL);
+  quest = { items: items, gold: Math.max(1, Math.round(wert * faktor)), angel: stand.angel };
+}
+function questFertig() { return !!quest && quest.items.every(function (it) { return it.ab >= it.n; }); }
+// Will der Bär von dieser Fischart noch etwas?
+function baerBraucht(typ) {
+  return !baerPause && !!quest && stand.kachel5 && quest.items.some(function (it) { return it.t === typ && it.ab < it.n; });
+}
+// Fische vom Inventar auf den Bären gezogen: so viele nehmen wie er noch braucht, der Rest bleibt im Inventar
+function questAbgeben(d) {
+  if (!stand.kachel5) return;
+  if (baerPause) { neuAnimieren(baerEl, 'nein'); return; }   // der Bär schläft gerade
+  if (!quest) { questUmschalten(true); return; }   // noch keine Quest: erst einmal zeigen, was er will
+  const it = quest.items.find(function (x) { return x.t === d.typ; });
+  const dazu = it ? Math.min(d.n, it.n - it.ab) : 0;
+  if (dazu <= 0) { neuAnimieren(baerEl, 'nein'); return; }
+  it.ab += dazu;
+  stand.inv[d.i] = platzBauen(d.typ, d.n - dazu);
+  spiele(sndDrop);
+  if (questOffen) questZeichnen(); else questUmschalten(true);
+}
+// Klick auf das Gold: Belohnung nehmen, Bär wechselt zu bear2.png und hat nach QUEST_PAUSE Sekunden eine neue Quest
+function questGoldNehmen(e) {
+  e.stopPropagation();
+  if (baerPause || !questFertig()) return;
+  const verdient = quest.gold;
+  stand.muenzen = Math.min(1000000, stand.muenzen + verdient);
+  stand.goldGesamt = Math.min(1000000, stand.goldGesamt + verdient);   // zählt für die Rangliste wie verkauftes Gold
+  spiele(sndCoins);
+  goldBounce();
+  speichern();
+  syncen();
+  anzeigen();
+  questUmschalten(false);
+  quest = null;
+  baerPause = true;
+  baerEl.src = 'bear2.png';
+  baerEl.classList.add('pause');
+  neuAnimieren(baerEl, 'pop');
+  setTimeout(function () {
+    baerPause = false;
+    baerEl.src = 'bear.png';
+    baerEl.classList.remove('pause');
+    questNeu();   // neue Quest mit der Angel, die der Spieler jetzt hat
+    neuAnimieren(baerEl, 'pop');
+  }, E.QUEST_PAUSE * 1000);
+}
+function questZeichnen() {
+  questEl.textContent = '';
+  quest.items.forEach(function (it) {
+    const box = document.createElement('div');
+    box.className = 'qitem' + (it.ab >= it.n ? ' fertig' : '');
+    const img = document.createElement('img');
+    img.src = art(it.t).bild;
+    img.alt = art(it.t).name;
+    img.draggable = false;
+    if (it.t === 'k') img.className = 'k';
+    box.appendChild(img);
+    const z = document.createElement('span');
+    z.className = 'qzahl';
+    z.textContent = it.ab + '/' + it.n;
+    box.appendChild(z);
+    questEl.appendChild(box);
+  });
+  const pf = document.createElement('img');
+  pf.className = 'qpfeil';
+  pf.src = 'rpfeil.png';
+  pf.alt = '';
+  pf.draggable = false;
+  questEl.appendChild(pf);
+  const g = document.createElement('div');
+  g.className = 'qgold' + (questFertig() ? ' bereit' : '');
+  if (questFertig()) g.addEventListener('click', questGoldNehmen);
+  const gi = document.createElement('img');
+  gi.src = 'gold.png'; gi.alt = 'Gold'; gi.draggable = false;
+  const gz = document.createElement('span');
+  gz.textContent = quest.gold;
+  g.appendChild(gi);
+  g.appendChild(gz);
+  questEl.appendChild(g);
+}
+function questUmschalten(offen) {
+  questOffen = offen && stand.kachel5;
+  if (questOffen) {
+    if (!quest || quest.angel > stand.angel) questNeu();   // noch keine Quest (oder Angel zurückgesetzt, z. B. nach dem Abmelden)
+    questZeichnen();
+  }
+  questEl.classList.remove('an');
+  if (questOffen) { void questEl.offsetWidth; questEl.classList.add('an'); }
+}
+baerEl.addEventListener('click', function (e) {
+  e.stopPropagation();
+  if (!stand.kachel5 || baerPause) return;
+  questUmschalten(!questOffen);
+});
+document.addEventListener('click', function (e) {
+  if (questOffen && !questEl.contains(e.target)) questUmschalten(false);
+});
+
 const feuerSound = new Audio('lagerfeuer.mp3');
 feuerSound.loop = true;
 feuerEl.addEventListener('click', function () {
@@ -1006,8 +1476,8 @@ feuerEl.addEventListener('click', function () {
 });
 
 // ---------------------------------------------------------------------
-//  Inventar: Ziehen (Maus und Finger). Auf ein anderes Feld = tauschen,
-//  auf das Lagerfeuer = braten.
+//  Inventar: Ziehen (Maus und Finger). Auf ein anderes Feld = tauschen bzw. Stapel
+//  zusammenlegen, auf das Lagerfeuer = braten, auf den Shop = verkaufen (ganzer Stapel).
 // ---------------------------------------------------------------------
 let drag = null;
 function ueberFeuer(x, y) {
@@ -1019,6 +1489,11 @@ function ueberShop(x, y) {
   if (!stand.kachel3) return false;
   const r = shopEl.getBoundingClientRect();
   return x > r.left - 12 && x < r.right + 12 && y > r.top - 12 && y < r.bottom + 12;
+}
+function ueberBaer(x, y) {
+  if (!stand.kachel5) return false;
+  const r = baerEl.getBoundingClientRect();
+  return x > r.left - 8 && x < r.right + 8 && y > r.top - 8 && y < r.bottom + 8;
 }
 shopEl.addEventListener('click', function () {
   if (!stand.kachel3) return;
@@ -1051,20 +1526,33 @@ invEl.addEventListener('pointerdown', function (e) {
   const i = +sl.dataset.i;
   if (!stand.inv[i]) return;
   e.preventDefault();
+  dragStarten(e, sl, { quelle: 'inv', i: i, typ: platzTyp(stand.inv[i]), n: platzAnz(stand.inv[i]) });
+});
+// Gebratene Fische lassen sich direkt aus dem Lagerfeuer-Slot ziehen (zum Verkaufen oder ins Inventar).
+// Nur anklicken (ohne ziehen) legt weiterhin alles ins Inventar.
+ofenOut.addEventListener('pointerdown', function (e) {
+  if (stand.ofenFertig.length === 0) return;
+  e.preventDefault();
+  const t = stand.ofenFertig[0];
+  dragStarten(e, ofenOut, { quelle: 'ofen', typ: t, n: stand.ofenFertig.filter(function (x) { return x === t; }).length });
+});
+function dragStarten(e, sl, d) {
   const g = document.createElement('img');
-  g.src = E.BILD_FISCH;
-  g.className = 'ghost' + (stand.inv[i] === 'g' ? ' g' : stand.inv[i] === 'k' ? ' k' : '');
+  g.src = art(d.typ).bild;
+  g.className = 'ghost' + typKlasse(d.typ);
   document.body.appendChild(g);
-  drag = { i: i, g: g, typ: stand.inv[i] };
+  d.g = g; d.slot = sl; d.x0 = e.clientX; d.y0 = e.clientY;
+  drag = d;
   sl.classList.add('zieht');
   ziehen(e);
-});
+}
 function ziehen(e) {
   if (!drag) return;
   drag.g.style.left = e.clientX + 'px';
   drag.g.style.top = e.clientY + 'px';
-  feuerEl.classList.toggle('ziel', drag.typ === 'f' && ueberFeuer(e.clientX, e.clientY));
+  feuerEl.classList.toggle('ziel', istRoh(drag.typ) && ueberFeuer(e.clientX, e.clientY));
   shopEl.classList.toggle('ziel', ueberShop(e.clientX, e.clientY));
+  baerEl.classList.toggle('ziel', drag.quelle === 'inv' && baerBraucht(drag.typ) && ueberBaer(e.clientX, e.clientY));
 }
 window.addEventListener('pointermove', ziehen);
 function ziehenEnde(e, abbruch) {
@@ -1074,21 +1562,50 @@ function ziehenEnde(e, abbruch) {
   d.g.remove();
   feuerEl.classList.remove('ziel');
   shopEl.classList.remove('ziel');
-  slotEls[d.i].classList.remove('zieht');
+  baerEl.classList.remove('ziel');
+  d.slot.classList.remove('zieht');
   if (!abbruch) {
     let verkauft = false;
+    if (d.quelle === 'ofen' && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 8) {
+      ofenEinsammeln('ofenFertig');   // nur angeklickt, nicht gezogen
+      return;
+    }
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const ziel = el && el.closest ? el.closest('#inv .slot') : null;
-    if (ziel && +ziel.dataset.i !== d.i) {
+    if (ziel && d.quelle === 'inv' && +ziel.dataset.i !== d.i) {
       const j = +ziel.dataset.i;
-      const t = stand.inv[j]; stand.inv[j] = stand.inv[d.i]; stand.inv[d.i] = t;
-    } else if (d.typ === 'f' && ueberFeuer(e.clientX, e.clientY) && stand.ofenRoh < SLOTS) {
-      stand.inv[d.i] = '';
-      stand.ofenRoh++;
+      if (platzTyp(stand.inv[j]) === d.typ) {   // gleiche Art: Stapel zusammenlegen
+        const a = platzAnz(stand.inv[j]);
+        const dazu = Math.min(d.n, E.STAPEL_MAX - a);
+        if (dazu > 0) {
+          stand.inv[j] = platzBauen(d.typ, a + dazu);
+          stand.inv[d.i] = platzBauen(d.typ, d.n - dazu);
+        }
+      } else {   // andere Art oder leeres Feld: tauschen
+        const t = stand.inv[j]; stand.inv[j] = stand.inv[d.i]; stand.inv[d.i] = t;
+      }
+    } else if (ziel && d.quelle === 'ofen') {   // aus dem Lagerfeuer in ein Inventarfeld (leer oder gleiche Art)
+      const j = +ziel.dataset.i;
+      if (!stand.inv[j] || platzTyp(stand.inv[j]) === d.typ) {
+        const a = platzAnz(stand.inv[j]);
+        const dazu = Math.min(d.n, E.STAPEL_MAX - a);
+        if (dazu > 0) {
+          stand.inv[j] = platzBauen(d.typ, a + dazu);
+          ausListe(stand.ofenFertig, d.typ, dazu);
+        }
+      }
+    } else if (d.quelle === 'inv' && istRoh(d.typ) && ueberFeuer(e.clientX, e.clientY)) {
+      // ins Lagerfeuer: so viele wie in den Ofen passen, der Rest bleibt im Inventar
+      const frei = Math.min(SLOTS - stand.ofenRoh.length, OFEN_MAX - stand.ofenRoh.length - stand.ofenFertig.length);
+      const rein = Math.min(d.n, Math.max(0, frei));
+      for (let k = 0; k < rein; k++) stand.ofenRoh.push(d.typ);
+      stand.inv[d.i] = platzBauen(d.typ, d.n - rein);
+    } else if (d.quelle === 'inv' && ueberBaer(e.clientX, e.clientY)) {
+      questAbgeben(d);   // dem Bären Fische für die Quest geben
     } else if (ueberShop(e.clientX, e.clientY)) {
-      // Fisch verkaufen: normal = GOLD_FISCH, gebraten = GOLD_GEBRATEN
-      stand.inv[d.i] = '';
-      const verdient = d.typ === 'g' ? E.GOLD_GEBRATEN : d.typ === 'k' ? E.GOLD_GOLDFISCH : E.GOLD_FISCH;
+      // Verkaufen: der ganze Stapel auf einmal, Gold je nach Fischart, roh oder gebraten (siehe FISCHE)
+      if (d.quelle === 'inv') stand.inv[d.i] = ''; else ausListe(stand.ofenFertig, d.typ, d.n);
+      const verdient = d.n * (istGebraten(d.typ) ? art(d.typ).gebraten : art(d.typ).roh);
       stand.muenzen = Math.min(1000000, stand.muenzen + verdient);
       stand.goldGesamt = Math.min(1000000, stand.goldGesamt + verdient);   // Rangliste: Ausgeben senkt das nicht
       spiele(sndCoins);
@@ -1105,36 +1622,34 @@ window.addEventListener('pointercancel', function (e) { ziehenEnde(e, true); });
 
 // ---------------------------------------------------------------------
 //  Ofen: roh links, Pfeil füllt sich, fertig rechts. Klick auf ein Feld = ins Inventar.
+//  Fertige Fische lassen sich außerdem herausziehen (siehe oben).
 // ---------------------------------------------------------------------
 let ofenFortschritt = 0;
 function ofenPfeil() {
   pfeilFuell.style.clipPath = 'inset(0 ' + (100 - ofenFortschritt * 100) + '% 0 0)';
 }
 setInterval(function () {
-  if (stand.ofenRoh <= 0) {
+  if (stand.ofenRoh.length === 0) {
     if (ofenFortschritt) { ofenFortschritt = 0; ofenPfeil(); }
     return;
   }
-  ofenFortschritt += 0.1 / E.BRATZEIT;
+  ofenFortschritt += 0.1 / (axtAktiv() ? E.AXT_BRATZEIT : E.BRATZEIT);
   if (ofenFortschritt >= 1) {
     ofenFortschritt = 0;
-    stand.ofenRoh--;
-    stand.ofenFertig++;
+    stand.ofenFertig.push(stand.ofenRoh.shift().toUpperCase());   // vorderster Fisch ist fertig
     speichern();
     anzeigen();
   }
   ofenPfeil();
 }, 100);
 
-function ofenEinsammeln(feld, typ) {
-  let n = stand[feld];
-  while (n > 0 && freierSlot() >= 0) { stand.inv[freierSlot()] = typ; n--; }
-  stand[feld] = n;
+function ofenEinsammeln(feld) {
+  const liste = stand[feld];
+  while (liste.length > 0 && platzFuer(liste[0])) { hinzufuegen(liste[0], 1); liste.shift(); }
   speichern();
   anzeigen();
 }
-ofenOut.addEventListener('click', function () { ofenEinsammeln('ofenFertig', 'g'); });
-ofenIn.addEventListener('click', function () { ofenEinsammeln('ofenRoh', 'f'); });
+ofenIn.addEventListener('click', function () { ofenEinsammeln('ofenRoh'); });
 
 // ---------------------------------------------------------------------
 //  Fischer-GIF: steht auf dem ersten Frame, spielt einmal pro Klick auf "Fischen".
@@ -1296,7 +1811,7 @@ function zeigeMeldung(text, klasse, ms) {
 
 knopfEl.addEventListener('click', function () {
   if (phase !== 'bereit') return;
-  if (freierSlot() < 0) { zeigeMeldung('Inventar voll!', 'schlecht', 1200); return; }
+  if (inventarVoll()) { zeigeMeldung('Inventar voll!', 'schlecht', 1200); return; }
   phase = 'warten';
   knopfEl.disabled = true;
   spiele(sndAuswerfen);
@@ -1328,17 +1843,38 @@ window.addEventListener('keyup', function (e) {
 // Zustand des Minispiels (Positionen laufen von 0 bis 1 über die Leiste)
 let zp, zv, fp, fv, ziel, zielZeit, fischTempo, fortschritt, letzteZeit, startZeit, rafId;
 let zw = E.ANGEL_ZONE[0], fuellTempo = E.ANGEL_FUELL_TEMPO[0];   // werden bei jedem Start je nach Angel gesetzt
+let aktFisch = 'f';                        // Fisch, der gerade angebissen hat (f b w n d a k)
+let schwTempo = 1, schwWechsel = 1;        // Tempo- und Wechsel-Faktor aus der Schwierigkeit des Fisches
+
+// Welcher Fisch beißt an? Erst die Goldfisch-Chance, sonst nach den Gewichten der Angel (ANGEL_CHANCEN)
+function fischWuerfeln() {
+  if (Math.random() * 100 < E.GOLDFISCH_CHANCE) return 'k';
+  const w = E.ANGEL_CHANCEN[stand.angel - 1];
+  const arten = Object.keys(w);
+  let summe = 0;
+  arten.forEach(function (a) { summe += w[a]; });
+  let r = Math.random() * summe;
+  for (let i = 0; i < arten.length; i++) { r -= w[arten[i]]; if (r < 0) return arten[i]; }
+  return 'f';
+}
 
 function startSpiel() {
   phase = 'spiel';
   zw = E.ANGEL_ZONE[stand.angel - 1];
   fuellTempo = E.ANGEL_FUELL_TEMPO[stand.angel - 1];
+  // Welcher Fisch hat angebissen? Das steht jetzt schon fest, weil seine Schwierigkeit das Minispiel bestimmt.
+  aktFisch = fischWuerfeln();
+  markeEl.src = art(aktFisch).bild;   // in der Leiste schwimmt der echte Fisch
+  markeEl.className = aktFisch === 'k' ? 'k' : '';
+  const stufe = Math.min(5, Math.max(1, E.TEST_SCHWIERIGKEIT || art(aktFisch).stufe || 3));
+  schwTempo = E.SCHWIERIGKEIT_TEMPO[stufe - 1];
+  schwWechsel = E.SCHWIERIGKEIT_WECHSEL[stufe - 1];
   spiele(sndDrip);
   spiele(sndReeling);
   gedrueckt = false;
   zp = 0.5 - zw / 2; zv = 0;
   fp = 0.5; fv = 0;
-  ziel = 0.5; zielZeit = 0; fischTempo = E.FISCH_TEMPO;
+  ziel = 0.5; zielZeit = 0; fischTempo = E.FISCH_TEMPO * schwTempo;
   fortschritt = E.START_FORTSCHRITT;
   meldungEl.className = '';
   leisteEl.classList.add('aktiv');
@@ -1364,8 +1900,8 @@ function schritt(jetzt) {
   zielZeit -= dt;
   if (zielZeit <= 0 || Math.abs(ziel - fp) < 0.02) {
     ziel = zufall(0.05, 0.95);
-    zielZeit = zufall(0.4, 1.2);
-    fischTempo = E.FISCH_TEMPO * zufall(0.6, 1.4);
+    zielZeit = zufall(0.4, 1.2) * schwWechsel;
+    fischTempo = E.FISCH_TEMPO * schwTempo * zufall(0.6, 1.4);
   }
   fv += (Math.sign(ziel - fp) * fischTempo - fv) * Math.min(1, dt * 8);
   fp = Math.min(1, Math.max(0, fp + fv * dt));
@@ -1400,15 +1936,13 @@ function spielEnde(gewonnen) {
   leisteEl.classList.remove('aktiv');
 
   if (gewonnen) {
-    const platz = freierSlot();
-    if (platz < 0) {
+    if (!platzFuer(aktFisch)) {
       zeigeMeldung('Inventar voll – Fisch weg!', 'schlecht', 1100);
     } else {
-      const golden = Math.random() < 1 / E.ANGEL_GOLDFISCH_CHANCE[stand.angel - 1];   // 1 zu X
-      stand.inv[platz] = golden ? 'k' : 'f';
+      const golden = aktFisch === 'k';
+      hinzufuegen(aktFisch, 1);   // setzt auch neuSlot für den Bounce
       if (golden) zeigeMeldung('Goldener Fisch!', 'gut', 1500);
       spiele(sndDrop);
-      neuSlot = platz;
       speichern();
       anzeigen();
     }
@@ -1433,9 +1967,11 @@ function spielstandDoc() {
     goldGesamt: stand.goldGesamt,
     kachel2: stand.kachel2,
     kachel3: stand.kachel3,
+    kachel4: stand.kachel4,
+    kachel5: stand.kachel5,
     angel: stand.angel,
-    ofenRoh: stand.ofenRoh,
-    ofenFertig: stand.ofenFertig,
+    ofenRoh: stand.ofenRoh.slice(),
+    ofenFertig: stand.ofenFertig.slice(),
     updatedAt: fb.fs.serverTimestamp()
   };
 }
@@ -1592,13 +2128,16 @@ async function ranglisteLaden() {
 
 function zeile(z, istIch) {
   const div = document.createElement('div');
-  div.className = 'rang-zeile' + (istIch ? ' ich' : '');
+  div.className = 'rang-zeile' + (z.platz <= 3 ? ' platz' + z.platz : '') + (istIch ? ' ich' : '');
   const platz = document.createElement('span');
   platz.className = 'rang-platz';
   platz.textContent = z.platz + '.';
   const name = document.createElement('span');
   name.className = 'rang-name';
   name.textContent = z.name;       // textContent: Namen können kein HTML einschleusen
+  const medaille = ['gold', 'silber', 'bronze'].find(function (m) { return E.MEDAILLEN[m] && E.MEDAILLEN[m] === z.id; });
+  if (medaille) name.classList.add('med-' + medaille);
+  else if (E.NAMENSFARBEN[z.id]) name.style.color = E.NAMENSFARBEN[z.id];
   const g = document.createElement('span');
   g.className = 'rang-gold';
   g.appendChild(document.createTextNode(z.gold));
@@ -1809,3 +2348,5 @@ setTimeout(authFertig, 4000);   // Notfall: Knopf nach 4 s auf jeden Fall freige
 </script>
 </body>
 </html>
+
+
