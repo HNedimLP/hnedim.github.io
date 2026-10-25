@@ -238,6 +238,15 @@ img{max-width:100%}
   z-index:1;
 }
 #hund.revealed{opacity:1}
+
+/* Handy: Hund sitzt unten rechts neben dem Datenschutz-Link */
+@media (max-width:600px){
+  #hund{
+    top:auto;
+    bottom:24px;
+    right:10px;
+  }
+}
 </style>
 </head>
 <body>
@@ -286,6 +295,17 @@ img{max-width:100%}
      Dazwischen kommt der Inhalt als normales HTML (<p>, <img>, <a> ...).
      ===================================================================== -->
 
+<template class="eintrag" data-datum="2026-10-25" data-titel="Der Bär ist da">
+  <h3>Neues Fischen Update!!</h3>
+  <img src="bear.png" alt="bärrrrr">
+  <p>Musste leider alle Accounts resetten, aber dafür gibt es jetzt ganz viele neue Fische und vieles mehr...</p>
+  <p>Die bestplazierten der Rangliste wahren:</p>
+  <p>1. Jkizzy</p>
+  <p>2. sani</p>
+  <p>3. Said</p>
+  <p>Viel Spaß mit dem neuen Update!</p>
+</template>  
+  
 <template class="eintrag" data-datum="2026-10-21" data-titel="Fischen!">
   <h3>Es gibt jetzt den Anfang vom Fischen Minispiel!</h3>
   <img src="fischer.gif" alt="Fischen Version 0.1">
