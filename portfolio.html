@@ -69,8 +69,51 @@ h1{
 
 .reihe{display:flex;gap:10px;flex-wrap:wrap}
 .reihe div{flex:1 1 200px}
-.reihe video,.reihe img,.reihe iframe{width:100%}
-.reihe iframe{aspect-ratio:16/9}
+
+/* Video-Galerien */
+.galerie{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));align-items:start}
+.karte h3{margin:0 0 8px}
+.karte p{margin:8px 0 0}
+
+/* Video-Rahmen: schwarzer Hintergrund, runde Ecken, feste Proportion */
+.karte video,
+.ytbox{
+  display:block;
+  width:100%;
+  background:#000;
+  border-radius:12px;
+  box-shadow:0 6px 18px rgba(0,0,0,.25);
+  object-fit:contain;
+}
+.karte video.breit{aspect-ratio:16/9}
+.karte video.hoch{aspect-ratio:9/16;max-height:85vh}
+
+/* Gemischte Reihe (Eigene Projekte): 2 Querformat links gestapelt, 1 Hochformat rechts */
+.galerie.gemischt{grid-template-columns:3fr 2fr}
+.gemischt .karte{grid-column:1}
+.gemischt .karte.hoch{grid-column:2;grid-row:1 / span 2}
+@media (max-width:700px){
+  .galerie.gemischt{grid-template-columns:1fr}
+  .gemischt .karte,.gemischt .karte.hoch{grid-column:1;grid-row:auto}
+}
+
+/* YouTube-Vorschau mit Play-Knopf */
+.galerie.yt{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.ytbox{position:relative;aspect-ratio:16/9;overflow:hidden}
+.ytbox img{width:100%;height:100%;object-fit:cover;display:block}
+.ytbox button{
+  position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+  max-width:90%;
+  padding:8px 14px;
+  background:rgba(0,0,0,.75);
+  color:#fff;
+  border:0;
+  border-radius:999px;
+  font-size:.9em;
+  cursor:pointer;
+}
+.ytbox button:hover{background:orange}
+.ytbox iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
 </style>
 </head>
@@ -92,37 +135,37 @@ h1{
 </div>
 
 <section class="bereich" id="eigene" hidden>
-<div class="reihe">
-<div>
+<div class="galerie gemischt">
+<div class="karte">
 <h3>Kitschiger Wanderfilm</h3>
-<video controls poster="vid1.jpg" src="vid1.mp4"></video>
+<video class="breit" controls playsinline preload="metadata" poster="vid1.jpg" src="vid1.mp4"></video>
 </div>
-<div>
+<div class="karte">
 <h3>Kurzfilm Konzept Iris</h3>
-<video controls poster="vid2.jpg" src="vid2.mp4"></video>
+<video class="breit" controls playsinline preload="metadata" poster="vid2.jpg" src="vid2.mp4"></video>
 </div>
-<div>
+<div class="karte hoch">
 <h3>Teqball Tournier Reel</h3>
-<video controls poster="vid3.jpg" src="vid3.mp4"></video>
+<video class="hoch" controls playsinline preload="metadata" poster="vid3.jpg" src="vid3.mp4"></video>
 </div>
 </div>
 </section>
 
 <section class="bereich" id="agentur" hidden>
-<div class="reihe">
-<div>
+<div class="galerie">
+<div class="karte">
 <h3>3D Animation</h3>
-<video controls poster="fak1.jpg" src="fak1.mp4"></video>
+<video class="hoch" controls playsinline preload="metadata" poster="fak1.jpg" src="fak1.mp4"></video>
   <p>3D Modell · Animation · Schnitt</p>
 </div>
-<div>
+<div class="karte">
 <h3>Behind the Scenes</h3>
-<video controls poster="fak2.jpg" src="fak2.mp4"></video>
+<video class="hoch" controls playsinline preload="metadata" poster="fak2.jpg" src="fak2.mp4"></video>
     <p>Kamera · Schnitt</p>
 </div>
-<div>
+<div class="karte">
 <h3>Erklärvideo</h3>
-<video controls poster="fak3.jpg" src="fak3.mp4"></video>
+<video class="hoch" controls playsinline preload="metadata" poster="fak3.jpg" src="fak3.mp4"></video>
 <p>Konzept · Kamera · Schnitt</p>
 </div>
 </div>
@@ -132,26 +175,26 @@ h1{
 </section>
 
 <section class="bereich" id="youtube" hidden>
-<div class="reihe">
-<div>
+<div class="galerie yt">
+<div class="karte">
 <h3>Urlaub Vlog</h3>
-<div id="yt1">
-<img src="yt1.jpg" alt="Vorschau"><br>
-<button onclick="laden('yt1','lGqfyHk4mdA')">Video laden (Verbindung zu YouTube)</button>
+<div class="ytbox" id="yt1">
+<img src="yt1.jpg" alt="Vorschau">
+<button onclick="laden('yt1','lGqfyHk4mdA')">▶ Video laden (Verbindung zu YouTube)</button>
 </div>
 </div>
-<div>
+<div class="karte">
 <h3>Wander Vlog</h3>
-<div id="yt2">
-<img src="yt2.jpg" alt="Vorschau"><br>
-<button onclick="laden('yt2','oNNqEW4rRIM')">Video laden (Verbindung zu YouTube)</button>
+<div class="ytbox" id="yt2">
+<img src="yt2.jpg" alt="Vorschau">
+<button onclick="laden('yt2','oNNqEW4rRIM')">▶ Video laden (Verbindung zu YouTube)</button>
 </div>
 </div>
-<div>
+<div class="karte">
 <h3>Harz Vlog</h3>
-<div id="yt3">
-<img src="yt3.jpg" alt="Vorschau"><br>
-<button onclick="laden('yt3','9HcyDRoSFp0')">Video laden (Verbindung zu YouTube)</button>
+<div class="ytbox" id="yt3">
+<img src="yt3.jpg" alt="Vorschau">
+<button onclick="laden('yt3','9HcyDRoSFp0')">▶ Video laden (Verbindung zu YouTube)</button>
 </div>
 </div>
 </div>
