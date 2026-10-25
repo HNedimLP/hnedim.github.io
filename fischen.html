@@ -1058,6 +1058,30 @@ function anzahl(typ) {
   stand.inv.forEach(function (v) { if (platzTyp(v) === typ) summe += platzAnz(v); });
   return summe;
 }
+// Zählt alle Fische einer Gruppe (roh = alle rohen inkl. goldener, sonst alle gebratenen), egal welche Art
+function istGruppe(t, roh) { return roh ? (t === t.toLowerCase()) : istGebraten(t); }
+function anzahlGruppe(roh) {
+  let summe = 0;
+  stand.inv.forEach(function (v) { const t = platzTyp(v); if (t && istGruppe(t, roh)) summe += platzAnz(v); });
+  return summe;
+}
+// Zieht n Fische beliebiger Art ab, die billigsten zuerst (goldener Fisch bleibt so möglichst erhalten)
+function entfernenGruppe(roh, n) {
+  while (n > 0) {
+    let best = -1, bestPreis = Infinity;
+    for (let i = 0; i < SLOTS; i++) {
+      const t = platzTyp(stand.inv[i]);
+      if (!t || !istGruppe(t, roh)) continue;
+      const p = roh ? art(t).roh : art(t).gebraten;
+      if (p < bestPreis) { bestPreis = p; best = i; }
+    }
+    if (best < 0) return;
+    const t = platzTyp(stand.inv[best]), a = platzAnz(stand.inv[best]);
+    const nimm = Math.min(n, a);
+    stand.inv[best] = platzBauen(t, a - nimm);
+    n -= nimm;
+  }
+}
 function entfernen(typ, n) {
   for (let i = 0; i < SLOTS && n > 0; i++) {
     if (platzTyp(stand.inv[i]) !== typ) continue;
@@ -1202,7 +1226,7 @@ function zuruecksetzen() {   // zurück auf Level 0 (beim Abmelden)
 // ---------------------------------------------------------------------
 function kaufen() {
   if (stand.kachel2) return;
-  if (anzahl('f') < E.KOSTEN_KACHEL_2) {
+  if (anzahlGruppe(true) < E.KOSTEN_KACHEL_2) {
     freiEl.textContent = 'Zu wenig Fische!';
     freiEl.classList.add('rot');
     setTimeout(function () {
@@ -1212,7 +1236,7 @@ function kaufen() {
     return;
   }
   if (E.KAUF_ZIEHT_FISCHE_AB) {
-    entfernen('f', E.KOSTEN_KACHEL_2);
+    entfernenGruppe(true, E.KOSTEN_KACHEL_2);
   }
   stand.kachel2 = true;
   spiele(feuerSound);   // Lagerfeuer-Sound startet direkt beim Freischalten
@@ -1254,7 +1278,7 @@ function kaufenGold(nr) {
 // Kachel 3 (Shop) kaufen: mit gebratenen Fischen aus dem Inventar
 function kaufen3() {
   if (stand.kachel3 || !stand.kachel2) return;
-  if (anzahl('F') < E.KOSTEN_KACHEL_3) {
+  if (anzahlGruppe(false) < E.KOSTEN_KACHEL_3) {
     frei3El.textContent = 'Zu wenig gebratene Fische!';
     frei3El.classList.add('rot');
     setTimeout(function () {
@@ -1264,7 +1288,7 @@ function kaufen3() {
     return;
   }
   if (E.KAUF_ZIEHT_FISCHE_AB) {
-    entfernen('F', E.KOSTEN_KACHEL_3);
+    entfernenGruppe(false, E.KOSTEN_KACHEL_3);
   }
   stand.kachel3 = true;
   speichern();
@@ -1480,6 +1504,12 @@ feuerEl.addEventListener('click', function () {
 //  zusammenlegen, auf das Lagerfeuer = braten, auf den Shop = verkaufen (ganzer Stapel).
 // ---------------------------------------------------------------------
 let drag = null;
+// Eingabe-Slot hält nur EINE Art (wie in Minecraft): leer oder gleiche Art darf rein
+function feuerNimmt(typ) {
+  if (!istRoh(typ)) return false;
+  if (stand.ofenRoh.length > 0 && stand.ofenRoh[0] !== typ) return false;
+  return Math.min(SLOTS - stand.ofenRoh.length, OFEN_MAX - stand.ofenRoh.length - stand.ofenFertig.length) > 0;
+}
 function ueberFeuer(x, y) {
   if (!stand.kachel2) return false;
   const r = feuerEl.getBoundingClientRect();
@@ -1550,7 +1580,7 @@ function ziehen(e) {
   if (!drag) return;
   drag.g.style.left = e.clientX + 'px';
   drag.g.style.top = e.clientY + 'px';
-  feuerEl.classList.toggle('ziel', istRoh(drag.typ) && ueberFeuer(e.clientX, e.clientY));
+  feuerEl.classList.toggle('ziel', feuerNimmt(drag.typ) && ueberFeuer(e.clientX, e.clientY));
   shopEl.classList.toggle('ziel', ueberShop(e.clientX, e.clientY));
   baerEl.classList.toggle('ziel', drag.quelle === 'inv' && baerBraucht(drag.typ) && ueberBaer(e.clientX, e.clientY));
 }
@@ -1594,7 +1624,7 @@ function ziehenEnde(e, abbruch) {
           ausListe(stand.ofenFertig, d.typ, dazu);
         }
       }
-    } else if (d.quelle === 'inv' && istRoh(d.typ) && ueberFeuer(e.clientX, e.clientY)) {
+    } else if (d.quelle === 'inv' && feuerNimmt(d.typ) && ueberFeuer(e.clientX, e.clientY)) {
       // ins Lagerfeuer: so viele wie in den Ofen passen, der Rest bleibt im Inventar
       const frei = Math.min(SLOTS - stand.ofenRoh.length, OFEN_MAX - stand.ofenRoh.length - stand.ofenFertig.length);
       const rein = Math.min(d.n, Math.max(0, frei));
@@ -1630,6 +1660,13 @@ function ofenPfeil() {
 }
 setInterval(function () {
   if (stand.ofenRoh.length === 0) {
+    if (ofenFortschritt) { ofenFortschritt = 0; ofenPfeil(); }
+    return;
+  }
+  // Wie in Minecraft: liegt im Ausgang eine ANDERE Fischart, wird nicht gebraten, bis der Ausgang leer ist.
+  // Gleiche Art (oder leerer Ausgang): es brät und stapelt sich im Ausgang.
+  const ausgang = stand.ofenFertig[0];
+  if (ausgang && ausgang !== stand.ofenRoh[0].toUpperCase()) {
     if (ofenFortschritt) { ofenFortschritt = 0; ofenPfeil(); }
     return;
   }
